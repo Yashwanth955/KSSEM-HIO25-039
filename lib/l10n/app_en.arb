@@ -1,75 +1,33 @@
+
 {
-  "@@locale": "en",
   "appTitle": "Sadhak",
-  "@appTitle": {
-    "description": "The title of the application"
+  "homeScreenGreeting": "Hi {userName} 👋, ready to test your fitness today?",
+  "@homeScreenGreeting": {
+    "placeholders": {
+      "userName": {
+        "type": "String"
+      }
+    }
   },
-  "cameraScreenTitle": "Camera",
-  "@cameraScreenTitle": {
-    "description": "Title for the camera screen"
-  },
-  "startTestButton": "Start Test",
-  "@startTestButton": {
-    "description": "Label for the start test button"
-  },
-  "stopTestButton": "Stop Test",
-  "@stopTestButton": {
-    "description": "Label for the stop test button"
-  },
-  "testInstructionsTitle": "Test Instructions",
-  "@testInstructionsTitle": {
-    "description": "Title for the test instructions section/screen"
-  },
-  "loginScreenAppName": "Sadhaka",
-  "@loginScreenAppName": {
-    "description": "App name displayed on the login screen"
-  },
-  "loginWelcomeBack": "Welcome Back",
-  "@loginWelcomeBack": {
-    "description": "Welcome message on the login screen"
-  },
-  "loginEmailHint": "Email or Username",
-  "@loginEmailHint": {
-    "description": "Hint text for the email/username input field"
-  },
-  "loginPasswordHint": "Password",
-  "@loginPasswordHint": {
-    "description": "Hint text for the password input field"
-  },
-  "loginForgotPassword": "Forgot Password?",
-  "@loginForgotPassword": {
-    "description": "Text for the forgot password button"
-  },
-  "loginButton": "Login",
-  "@loginButton": {
-    "description": "Label for the login button"
-  },
+  "language": "Language",
+  "english": "English",
+  "hindi": "Hindi",
+  "kannada": "Kannada",
+  "startFitnessTest": "Start Fitness Test",
+  "bestScore": "Best Score",
+  "leaderboard": "Leaderboard",
+  "badges": "Badges",
   "loginFailedError": "Login failed. Please check your credentials.",
-  "@loginFailedError": {
-    "description": "Error message shown on login failure"
-  },
+  "loginScreenAppName": "SADHAK",
+  "loginWelcomeBack": "Welcome Back!",
+  "loginEmailHint": "Email",
+  "loginPasswordHint": "Password",
+  "loginForgotPassword": "Forgot Password?",
+  "loginButton": "Login",
   "loginOrContinueWith": "Or continue with",
-  "@loginOrContinueWith": {
-    "description": "Text indicating alternative login methods"
-  },
   "loginContinueWithGoogle": "Continue with Google",
-  "@loginContinueWithGoogle": {
-    "description": "Label for the Google sign-in button"
-  },
   "loginContinueWithApple": "Continue with Apple",
-  "@loginContinueWithApple": {
-    "description": "Label for the Apple sign-in button"
-  },
   "loginDontHaveAccount": "Don't have an account?",
-  "@loginDontHaveAccount": {
-    "description": "Prompt for users who don't have an account"
-  },
   "loginSignUpButton": "Sign Up",
-  "@loginSignUpButton": {
-    "description": "Label for the sign-up button/link"
-  },
-  "loginMotivationalQuote": "\"The only bad workout is the one that didn't happen.\"",
-  "@loginMotivationalQuote": {
-    "description": "Motivational quote at the bottom of the login screen"
-  }
+  "loginMotivationalQuote": "The body achieves what the mind believes."
 }

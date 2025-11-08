@@ -1,26 +1,38 @@
 // lib/leaderboard_model.dart
-import 'package:isar/isar.dart'; // Changed from Hive to Isar
 
-part 'leaderboard_model.g.dart'; // Keep this for Isar code generation
-
-@collection // Changed from @HiveType
 class LeaderboardEntry {
-  Id id = Isar.autoIncrement; // Changed from 'late int id;' and HiveField(0)
+  int? id;
 
-  // @HiveField(1) // Removed HiveField annotation
-  late int rank;
+  int rank;
+  String name;
+  int score;
+  String imageUrl;
+  String region;
 
-  // @HiveField(2) // Removed HiveField annotation
-  late String name;
+  LeaderboardEntry({
+    this.id,
+    required this.rank,
+    required this.name,
+    required this.score,
+    required this.imageUrl,
+    required this.region,
+  });
 
-  // @HiveField(3) // Removed HiveField annotation
-  late int score;
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'rank': rank,
+    'name': name,
+    'score': score,
+    'imageUrl': imageUrl,
+    'region': region,
+  };
 
-  // @HiveField(4) // Removed HiveField annotation
-  late String imageUrl;
-
-  // @HiveField(5) // Removed HiveField annotation
-  late String region;
-
-  // Constructor can be added if needed
+  factory LeaderboardEntry.fromMap(Map<String, dynamic> m) => LeaderboardEntry(
+    id: m['id'] as int?,
+    rank: m['rank'] as int,
+    name: m['name'] as String,
+    score: m['score'] as int,
+    imageUrl: m['imageUrl'] as String,
+    region: m['region'] as String,
+  );
 }

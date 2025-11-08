@@ -1,8 +1,6 @@
-import 'dart:io';
-import 'package:camera/camera.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-// Removed video_player import as it's not used directly here
+import 'package:camera/camera.dart';
 
 // Import all necessary files for navigation and analysis
 import 'home_screen.dart';
@@ -11,10 +9,9 @@ import 'progress_screen.dart';
 import 'profile_screen.dart';
 import 'camera_screen.dart';
 import 'pose_analyzer.dart';
-import 'video_preview_screen.dart'; // Still needed if you retain video review for some tests
+// Still needed if you retain video review for some tests
 import 'report_screen.dart';
 import 'report_models.dart';
-import 'report_data.dart';
 
 // --- Global constants for consistent styling ---
 const primaryGreen = Color(0xFF20D36A);
@@ -73,7 +70,10 @@ class _RunResultScreenState extends State<RunResultScreen> {
                   breakdownMetrics: [
                     ReportMetric(label: 'Time', value: '00:00'), // Placeholder
                     ReportMetric(label: 'Distance', value: '0m'), // Placeholder
-                    ReportMetric(label: 'Pace', value: '0\'00"/km'), // Placeholder
+                    ReportMetric(
+                      label: 'Pace',
+                      value: '0\'00"/km',
+                    ), // Placeholder
                   ],
                   // --- Placeholder data for fields not available in this context ---
                   comparisonMetrics: [
@@ -102,7 +102,8 @@ class _RunResultScreenState extends State<RunResultScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportScreen(reportData: reportToShow),
+                    builder: (context) =>
+                        ReportScreen(reportData: reportToShow),
                   ),
                 );
               },
@@ -134,7 +135,10 @@ class _RunResultScreenState extends State<RunResultScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            const Text('Distance: 0m', style: TextStyle(color: Colors.grey)), // Placeholder
+            const Text(
+              'Distance: 0m',
+              style: TextStyle(color: Colors.grey),
+            ), // Placeholder
             const SizedBox(height: 24),
             _buildFeedbackSection(widget.feedback), // Pass the list
             const Spacer(),
@@ -165,7 +169,7 @@ class _RunResultScreenState extends State<RunResultScreen> {
                   isFilled: true,
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -201,18 +205,20 @@ class _RunResultScreenState extends State<RunResultScreen> {
 // --- 2. Result Screen for JUMPING/REP tests (Now a StatefulWidget) ---
 class JumpResultScreen extends StatefulWidget {
   final String testTitle;
-  final List<String> feedback; // Changed from String to List<String>
-  // final XFile? recordedVideo; // Removed as per request
+  final List<String> feedback;
   final int correctReps;
   final int wrongReps;
+  final int? testDurationSeconds;
+  final XFile? recordedVideo;
 
   const JumpResultScreen({
     super.key,
     required this.testTitle,
-    required this.feedback, // Changed
-    // this.recordedVideo, // Removed
+    required this.feedback,
     this.correctReps = 0,
     this.wrongReps = 0,
+    this.testDurationSeconds,
+    this.recordedVideo,
   });
 
   @override
@@ -220,6 +226,15 @@ class JumpResultScreen extends StatefulWidget {
 }
 
 class _JumpResultScreenState extends State<JumpResultScreen> {
+  String _formatDuration(int? totalSeconds) {
+    if (totalSeconds == null || totalSeconds < 0) return 'N/A';
+    final duration = Duration(seconds: totalSeconds);
+    // Pad with '0' to ensure two digits for minutes and seconds
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   void _showConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -240,16 +255,28 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                 // Dynamically create the report from the test results
                 final TestReport reportToShow = TestReport(
                   testTitle: widget.testTitle,
-                  imageUrl: 'https://i.imgur.com/G06sW7s.jpeg', // Using the same placeholder as the screen
+                  imageUrl: 'https://i.imgur.com/G06sW7s.jpeg',
                   headlineResult: '${widget.correctReps} Reps',
                   resultSummary:
-                      'You completed ${widget.correctReps} correct reps and had ${widget.wrongReps} incorrect reps. Review the feedback for tips on how to improve your form.',
+                      'You completed ${widget.correctReps} correct reps and had ${widget.wrongReps} incorrect reps in ${_formatDuration(widget.testDurationSeconds)}. Review the feedback for tips on how to improve your form.',
                   breakdownMetrics: [
-                    ReportMetric(label: 'Correct Reps', value: widget.correctReps.toString()),
-                    ReportMetric(label: 'Incorrect Reps', value: widget.wrongReps.toString()),
-                    ReportMetric(label: 'Total Reps', value: (widget.correctReps + widget.wrongReps).toString()),
+                    ReportMetric(
+                      label: 'Correct Reps',
+                      value: widget.correctReps.toString(),
+                    ),
+                    ReportMetric(
+                      label: 'Incorrect Reps',
+                      value: widget.wrongReps.toString(),
+                    ),
+                    ReportMetric(
+                      label: 'Total Reps',
+                      value: (widget.correctReps + widget.wrongReps).toString(),
+                    ),
+                    ReportMetric(
+                      label: 'Time Taken',
+                      value: _formatDuration(widget.testDurationSeconds),
+                    ),
                   ],
-                  // --- Placeholder data for fields not available in this context ---
                   comparisonMetrics: [
                     ReportMetric(label: 'Avg. Reps', value: '12'),
                     ReportMetric(label: 'Personal Best', value: '18'),
@@ -257,16 +284,15 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                   coachTips: widget.feedback.map((tip) {
                     return CoachTip(
                       icon: Icons.check_circle_outline,
-                      title: 'Form Feedback', // Generic title
+                      title: 'Form Feedback',
                       description: tip,
                     );
                   }).toList(),
                   progressTitle: 'Reps Over Time',
                   progressValue: '+2',
                   progressPeriod: 'Last 7 days',
-                  progressTrend: 'up', // 'up', 'down', or 'flat'
+                  progressTrend: 'up',
                   progressChartData: [
-                    // Dummy chart data
                     const FlSpot(0, 8),
                     const FlSpot(1, 10),
                     const FlSpot(2, 9),
@@ -275,12 +301,14 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                     const FlSpot(5, 14),
                     const FlSpot(6, 15),
                   ],
+                  videoFile: widget.recordedVideo,
                 );
 
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportScreen(reportData: reportToShow),
+                    builder: (context) =>
+                        ReportScreen(reportData: reportToShow),
                   ),
                 );
               },
@@ -293,8 +321,6 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final bool canReview = widget.recordedVideo != null; // Removed
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(context, widget.testTitle),
@@ -302,9 +328,6 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildImagePlaceholder('https://i.imgur.com/G06sW7s.jpeg'), // Placeholder
-            const SizedBox(height: 16),
-            // Display rep counts
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -312,12 +335,23 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                 _buildRepCounter('INCORRECT', widget.wrongReps, Colors.red),
               ],
             ),
-            const SizedBox(height: 24),
-            _buildFeedbackSection(widget.feedback), // Pass the list
+            const SizedBox(height: 16), // Adjusted spacing
+            Center(
+              // Centering the time taken text
+              child: Text(
+                'Time Taken: ${_formatDuration(widget.testDurationSeconds)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16), // Adjusted spacing
+            Expanded(child: _buildFeedbackSection(widget.feedback)),
             const Spacer(),
             Column(
               children: [
-                // Review video button removed from the Row, simplified to just Retake
                 _buildStyledButton(
                   text: 'Retake',
                   onPressed: () {
@@ -328,7 +362,6 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                         builder: (context) => CameraScreen(
                           analyzer: analyzer,
                           testName: widget.testTitle,
-                          // Consider if duration needs to be passed for retake
                         ),
                       ),
                     );
@@ -342,7 +375,7 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
                   isFilled: true,
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -353,8 +386,18 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
   Widget _buildRepCounter(String label, int count, Color color) {
     return Column(
       children: [
-        Text(count.toString(), style: TextStyle(color: color, fontSize: 36, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
+        Text(
+          count.toString(),
+          style: TextStyle(
+            color: color,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+        ),
       ],
     );
   }
@@ -381,13 +424,17 @@ AppBar _buildAppBar(BuildContext context, String title) {
       icon: const Icon(Icons.arrow_back, color: Colors.black),
       onPressed: () => Navigator.of(context).pop(),
     ),
-    title: Text(title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+    title: Text(
+      title,
+      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+    ),
     actions: [
       IconButton(
-          icon: const Icon(Icons.info_outline, color: Colors.black),
-          onPressed: () {
-            // Placeholder for info action
-          }),
+        icon: const Icon(Icons.info_outline, color: Colors.black),
+        onPressed: () {
+          // Placeholder for info action
+        },
+      ),
     ],
     centerTitle: true,
     backgroundColor: Colors.white,
@@ -397,7 +444,8 @@ AppBar _buildAppBar(BuildContext context, String title) {
 
 Widget _buildImagePlaceholder(String imageUrl) {
   // Check if the imageUrl is a local asset or a network image
-  bool isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('https');
+  bool isNetworkImage =
+      imageUrl.startsWith('http') || imageUrl.startsWith('https');
 
   return AspectRatio(
     aspectRatio: 16 / 9,
@@ -407,7 +455,10 @@ Widget _buildImagePlaceholder(String imageUrl) {
         borderRadius: BorderRadius.circular(16),
         image: isNetworkImage
             ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-            : DecorationImage(image: AssetImage(imageUrl), fit: BoxFit.cover), // Assuming local asset
+            : DecorationImage(
+                image: AssetImage(imageUrl),
+                fit: BoxFit.cover,
+              ), // Assuming local asset
       ),
       // child: const Icon(Icons.play_circle_outline, color: Colors.white70, size: 60), // Icon can be removed or kept based on preference
     ),
@@ -416,10 +467,15 @@ Widget _buildImagePlaceholder(String imageUrl) {
 
 // Updated to display a list of feedback points
 Widget _buildFeedbackSection(List<String> feedbackPoints) {
-  if (feedbackPoints.isEmpty || (feedbackPoints.length == 1 && feedbackPoints.first.isEmpty)) {
+  if (feedbackPoints.isEmpty ||
+      (feedbackPoints.length == 1 && feedbackPoints.first.isEmpty)) {
     return const Text(
       'No specific feedback points available.',
-      style: TextStyle(fontSize: 16, color: Colors.grey, fontStyle: FontStyle.italic),
+      style: TextStyle(
+        fontSize: 16,
+        color: Colors.grey,
+        fontStyle: FontStyle.italic,
+      ),
     );
   }
   return Column(
@@ -427,17 +483,23 @@ Widget _buildFeedbackSection(List<String> feedbackPoints) {
     children: [
       const Text(
         'Feedback',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
       ),
       const SizedBox(height: 12),
       Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9F9), // Light grey background for the feedback box
+          color: const Color(
+            0xFFF9F9F9,
+          ), // Light grey background for the feedback box
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               spreadRadius: 1,
               blurRadius: 3,
               offset: const Offset(0, 2),
@@ -451,12 +513,20 @@ Widget _buildFeedbackSection(List<String> feedbackPoints) {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.check_circle_outline, color: primaryGreen, size: 20),
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: primaryGreen,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       point,
-                      style: TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade800,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
@@ -486,7 +556,10 @@ Widget _buildStyledButton({
         elevation: 0,
         disabledBackgroundColor: Colors.grey.shade300,
       ),
-      child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
     ),
   );
 }
@@ -498,26 +571,41 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context) {
 
   void handleNavBarTap(int index) {
     // Avoid navigating to the current screen again
-    if (currentIndex == index && (index == 1 && ModalRoute.of(context)?.settings.name == '/tests')) return;
+    if (currentIndex == index &&
+        (index == 1 && ModalRoute.of(context)?.settings.name == '/tests')) {
+      return;
+    }
 
     switch (index) {
       case 0:
         Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
         break;
       case 1:
         // If already in a flow that originated from TestsScreen, perhaps just pop.
         // Otherwise, push new TestsScreen. For simplicity, always push and remove.
         Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
+          context,
+          MaterialPageRoute(builder: (context) => const TestsScreen()),
+          (route) => false,
+        );
         break;
       case 2:
         Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const ProgressScreen()), (route) => false);
+          context,
+          MaterialPageRoute(builder: (context) => const ProgressScreen()),
+          (route) => false,
+        );
         break;
       case 3:
         Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (context) => const ProfileScreen()), (route) => false);
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          (route) => false,
+        );
         break;
     }
   }
@@ -530,10 +618,26 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context) {
     type: BottomNavigationBarType.fixed, // Ensures all items are visible
     showUnselectedLabels: true, // Shows labels for unselected items
     items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-      BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), activeIcon: Icon(Icons.assignment), label: 'Tests'),
-      BottomNavigationBarItem(icon: Icon(Icons.show_chart_outlined), activeIcon: Icon(Icons.show_chart), label: 'Progress'),
-      BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Home',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.assignment_outlined),
+        activeIcon: Icon(Icons.assignment),
+        label: 'Tests',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.show_chart_outlined),
+        activeIcon: Icon(Icons.show_chart),
+        label: 'Progress',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.person_outline),
+        activeIcon: Icon(Icons.person),
+        label: 'Profile',
+      ),
     ],
   );
 }

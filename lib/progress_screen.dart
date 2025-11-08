@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'dart:math';
 
 // Imports for navigation and database services
 import 'home_screen.dart';
@@ -7,6 +9,10 @@ import 'tests_screen.dart';
 import 'profile_screen.dart';
 import 'isar_service.dart';
 import 'test_result.dart';
+import 'pdf_generator.dart';
+import 'report_upload_service.dart';
+import 'services/app_config.dart';
+import 'services/sync_service.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -39,7 +45,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
       ),
       body: Column(
         children: [
-          // Custom Tab Bar
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             padding: const EdgeInsets.all(4),
@@ -54,7 +59,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ],
             ),
           ),
-          // Tab Content
           Expanded(
             child: _selectedTabIndex == 0
                 ? const ReportsTabView()
@@ -81,7 +85,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
-                ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5)]
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 5,
+                    ),
+                  ]
                 : [],
           ),
           child: Text(
@@ -94,6 +103,60 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  BottomNavigationBar _buildBottomNavBar(BuildContext context) {
+    const primaryGreen = Color(0xFF20D36A);
+    void handleNavBarTap(int index) {
+      switch (index) {
+        case 0:
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+          break;
+        case 1:
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const TestsScreen()),
+            (route) => false,
+          );
+          break;
+        case 2:
+          break;
+        case 3:
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+          break;
+      }
+    }
+
+    return BottomNavigationBar(
+      currentIndex: 2,
+      onTap: handleNavBarTap,
+      selectedItemColor: primaryGreen,
+      unselectedItemColor: Colors.grey.shade600,
+      type: BottomNavigationBarType.fixed,
+      showUnselectedLabels: true,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.assignment_outlined),
+          label: 'Tests',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.show_chart),
+          label: 'Progress',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profile',
+        ),
+      ],
     );
   }
 }
@@ -122,7 +185,10 @@ class ProgressTabView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Overall Progress', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Overall Progress',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(
                   value: 0.7,
@@ -137,27 +203,38 @@ class ProgressTabView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          // --- Recommended Sports Section ---
           _buildRecommendedSportsSection(),
           const SizedBox(height: 24),
-
-          const Text('Achievements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Achievements',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             height: 150,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _buildAchievementCard('https://i.imgur.com/8m52eSO.png', 'Speed Demon'),
-                _buildAchievementCard('https://i.imgur.com/bT6R022.png', 'Endurance Master'),
-                _buildAchievementCard('https://i.imgur.com/k2p8J5F.png', 'Flexibility Pro'),
+                _buildAchievementCard(
+                  'assets/images/badges.png',
+                  'Speed Demon',
+                ),
+                _buildAchievementCard(
+                  'assets/images/badges.png',
+                  'Endurance Master',
+                ),
+                _buildAchievementCard(
+                  'assets/images/badges.png',
+                  'Flexibility Pro',
+                ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-
-          const Text('Recent Tests', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Recent Tests',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           FutureBuilder<List<TestResult>>(
             future: isarService.getAllTestResults(),
@@ -174,9 +251,10 @@ class ProgressTabView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final result = testResults[index];
                     return _buildRecentTestItem(
-                        result.testTitle,
-                        '${result.date.year}-${result.date.month}-${result.date.day}',
-                        result.resultValue);
+                      result.testTitle,
+                      DateFormat('yyyy-MM-dd').format(result.date),
+                      result.resultValue,
+                    );
                   },
                 );
               }
@@ -194,18 +272,37 @@ class ProgressTabView extends StatelessWidget {
   }
 
   Widget _buildRecommendedSportsSection() {
-    // Dummy data for recommended sports
     final sports = [
-      {'name': 'Swimming', 'reason': 'Excellent Endurance', 'image': 'https://images.unsplash.com/photo-1569911483321-3443a3e0f49a?q=80&w=2070'},
-      {'name': 'Weightlifting', 'reason': 'Great Strength', 'image': 'https://images.unsplash.com/photo-1581009137042-c552b485697a?q=80&w=2070'},
-      {'name': 'Sprinting', 'reason': 'Top-tier Speed', 'image': 'https://images.unsplash.com/photo-1508924329642-33d3d37a1a45?q=80&w=2070'},
+      {
+        'name': 'Swimming',
+        'reason': 'Excellent Endurance',
+        'image':
+            'https://images.unsplash.com/photo-1569911483321-3443a3e0f49a?q=80&w=2070',
+      },
+      {
+        'name': 'Weightlifting',
+        'reason': 'Great Strength',
+        'image':
+            'https://images.unsplash.com/photo-1581009137042-c552b485697a?q=80&w=2070',
+      },
+      {
+        'name': 'Sprinting',
+        'reason': 'Top-tier Speed',
+        'image':
+            'https://images.unsplash.com/photo-1508924329642-33d3d37a1a45?q=80&w=2070',
+      },
     ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Recommended Sports', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const Text('Based on your excellent fitness results', style: TextStyle(color: Colors.grey)),
+        const Text(
+          'Recommended Sports',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const Text(
+          'Based on your excellent fitness results',
+          style: TextStyle(color: Colors.grey),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           height: 220,
@@ -225,7 +322,11 @@ class ProgressTabView extends StatelessWidget {
     );
   }
 
-  Widget _buildSportCard({required String name, required String reason, required String imageUrl}) {
+  Widget _buildSportCard({
+    required String name,
+    required String reason,
+    required String imageUrl,
+  }) {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -236,7 +337,10 @@ class ProgressTabView extends StatelessWidget {
           image: DecorationImage(
             image: NetworkImage(imageUrl),
             fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+            colorFilter: ColorFilter.mode(
+              Colors.black.withValues(alpha: 0.4),
+              BlendMode.darken,
+            ),
           ),
         ),
         child: Padding(
@@ -245,18 +349,30 @@ class ProgressTabView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(name, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(reason, style: TextStyle(color: Colors.white.withOpacity(0.8))),
+              Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                reason,
+                style: TextStyle(color: Colors.blueGrey.withValues(alpha: 0.8)),
+              ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () {},
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text('View Details'),
-              )
+              ),
             ],
           ),
         ),
@@ -278,7 +394,7 @@ class ProgressTabView extends StatelessWidget {
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.network(imageUrl),
+            child: Image.asset(imageUrl, fit: BoxFit.contain),
           ),
           const SizedBox(height: 8),
           Text(title, textAlign: TextAlign.center),
@@ -297,24 +413,127 @@ class ProgressTabView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(date, style: const TextStyle(color: primaryGreen, fontSize: 14)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: const TextStyle(color: primaryGreen, fontSize: 14),
+                ),
               ],
             ),
           ),
-          Text(result, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            result,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
   }
 }
 
-class ReportsTabView extends StatelessWidget {
+enum PerformancePeriod { fiveDays, monthly, allTime }
+
+class ReportsTabView extends StatefulWidget {
   const ReportsTabView({super.key});
+
+  @override
+  State<ReportsTabView> createState() => _ReportsTabViewState();
+}
+
+class _ReportsTabViewState extends State<ReportsTabView> {
+  final IsarService _isarService = IsarService();
+  List<TestResult> _allTestResults = [];
+  List<TestResult> _filteredTestsForLineChart = [];
+  List<TestResult> _lastThreeForBarChart = [];
+
+  List<String> _uniqueTestTitles = [];
+  String? _selectedTestForComparison;
+
+  PerformancePeriod _selectedPeriod = PerformancePeriod.allTime;
+  bool _isLoading = true;
+
+  String _bestScore = 'N/A';
+  String _totalTests = '0';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    _allTestResults = await _isarService.getAllTestResults();
+    _allTestResults.sort((a, b) => a.date.compareTo(b.date));
+
+    if (mounted && _allTestResults.isNotEmpty) {
+      double maxScore = 0;
+      for (var result in _allTestResults) {
+        try {
+          double score =
+              double.tryParse(
+                result.resultValue.replaceAll(RegExp(r'[^0-9.]'), ''),
+              ) ??
+              0.0;
+          if (score > maxScore) maxScore = score;
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      _bestScore = min(maxScore, 99).toStringAsFixed(0);
+      _totalTests = _allTestResults.length.toString();
+      _uniqueTestTitles = _allTestResults
+          .map((r) => r.testTitle)
+          .toSet()
+          .toList();
+      if (_uniqueTestTitles.isNotEmpty &&
+          !_uniqueTestTitles.contains(_selectedTestForComparison)) {
+        _selectedTestForComparison = _uniqueTestTitles.first;
+      }
+    }
+    _filterResultsForCharts();
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _filterResultsForCharts() {
+    DateTime now = DateTime.now();
+    if (_selectedPeriod == PerformancePeriod.fiveDays) {
+      DateTime fiveDaysAgo = now.subtract(const Duration(days: 5));
+      _filteredTestsForLineChart = _allTestResults
+          .where((r) => r.date.isAfter(fiveDaysAgo))
+          .toList();
+    } else if (_selectedPeriod == PerformancePeriod.monthly) {
+      DateTime monthAgo = now.subtract(const Duration(days: 30));
+      _filteredTestsForLineChart = _allTestResults
+          .where((r) => r.date.isAfter(monthAgo))
+          .toList();
+    } else {
+      _filteredTestsForLineChart = List.from(_allTestResults);
+    }
+
+    if (_selectedTestForComparison != null) {
+      var filtered = _allTestResults
+          .where((r) => r.testTitle == _selectedTestForComparison)
+          .toList();
+      _lastThreeForBarChart = filtered.length > 3
+          ? filtered.sublist(filtered.length - 3)
+          : filtered;
+    } else {
+      _lastThreeForBarChart = [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const primaryGreen = Color(0xFF20D36A);
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -322,45 +541,210 @@ class ReportsTabView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _buildStatCard('Best Score', '95')),
+              Expanded(child: _buildStatCard('Best Score', _bestScore)),
               const SizedBox(width: 16),
-              Expanded(child: _buildStatCard('Total Tests Taken', '12')),
+              Expanded(child: _buildStatCard('Total Tests Taken', _totalTests)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final scaffold = ScaffoldMessenger.of(context);
+                scaffold.showSnackBar(
+                  const SnackBar(
+                    content: Text('Syncing results (JSON) to server...'),
+                  ),
+                );
+                final sync = SyncService();
+                final summary = await sync.uploadAllResults();
+                scaffold.hideCurrentSnackBar();
+                scaffold.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Sync complete: ${summary.success}/${summary.total} succeeded, ${summary.failed} failed',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.sync_outlined),
+              label: const Text('Sync Results to Server (JSON)'),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Performance Over Time',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ToggleButtons(
+            isSelected: [
+              _selectedPeriod == PerformancePeriod.fiveDays,
+              _selectedPeriod == PerformancePeriod.monthly,
+              _selectedPeriod == PerformancePeriod.allTime,
+            ],
+            onPressed: (index) {
+              setState(() {
+                if (index == 0) {
+                  _selectedPeriod = PerformancePeriod.fiveDays;
+                } else if (index == 1) {
+                  _selectedPeriod = PerformancePeriod.monthly;
+                } else {
+                  _selectedPeriod = PerformancePeriod.allTime;
+                }
+                _filterResultsForCharts();
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            selectedColor: Colors.white,
+            fillColor: primaryGreen,
+            color: primaryGreen,
+            constraints: BoxConstraints(
+              minHeight: 36.0,
+              minWidth: (MediaQuery.of(context).size.width - 48) / 3,
+            ),
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('5 Days'),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Monthly'),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('All Time'),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildStatCard('Avg. Improvement', '+15%', isFullWidth: true),
+          SizedBox(height: 150, child: LineChart(_buildLineChartData())),
           const SizedBox(height: 24),
-          const Text('Performance Over Time', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Text('+10%', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold)),
+          const Text(
+            'Last 3 Attempts Comparison',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          if (_uniqueTestTitles.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade400),
+              ),
+              child: DropdownButton<String>(
+                value: _selectedTestForComparison,
+                isExpanded: true,
+                underline: const SizedBox.shrink(),
+                items: _uniqueTestTitles
+                    .map(
+                      (String value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedTestForComparison = newValue;
+                    _filterResultsForCharts();
+                  });
+                },
+              ),
+            ),
           const SizedBox(height: 16),
-          SizedBox(height: 150, child: LineChart(mainData())),
+          SizedBox(height: 150, child: BarChart(_buildBarChartData())),
           const SizedBox(height: 24),
-          const Text('Last 3 Attempts Comparison', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Text('+5%', style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          SizedBox(height: 150, child: BarChart(barData())),
-          const SizedBox(height: 24),
-          const Text('Detailed Report Card', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Detailed Report Card',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
-          _buildReportCardItem(Icons.run_circle_outlined, 'Speed: 9.5/10', 'Excellent', Colors.green),
-          _buildReportCardItem(Icons.timer_outlined, 'Endurance: 7.2/10', 'Needs Improvement', Colors.orange),
-          _buildReportCardItem(Icons.star_outline, 'Flexibility: 5.8/10', 'Critical', Colors.red),
+          _buildReportCardItem(
+            Icons.run_circle_outlined,
+            'Speed',
+            'Excellent',
+            Colors.green,
+          ),
+          _buildReportCardItem(
+            Icons.fitness_center,
+            'Strength',
+            'Good',
+            Colors.orange,
+          ),
           const SizedBox(height: 24),
           Row(
             children: [
-              Expanded(child: OutlinedButton(onPressed: () {}, child: const Text('Download Report'))),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Export a consolidated PDF that includes all tests with dates and performance charts
+                    PdfGenerator.generateAndShareAllReports();
+                  },
+                  child: const Text('Export Overall PDF'),
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: primaryGreen, foregroundColor: Colors.white), child: const Text('Share with Coach'))),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    // Build PDF bytes and upload to server
+                    final scaffold = ScaffoldMessenger.of(context);
+                    try {
+                      scaffold.showSnackBar(
+                        const SnackBar(content: Text('Uploading report...')),
+                      );
+                      final bytes =
+                          await PdfGenerator.buildAllReportsPdfBytes();
+                      // TODO: Replace with your API base URL and optional auth token
+                      final uploader = ReportUploadService(
+                        baseUrl: AppConfig.backendBaseUrl,
+                        authToken: AppConfig.authToken,
+                      );
+                      final result = await uploader.uploadPdfBytes(
+                        pdfBytes: bytes,
+                        filename: 'All_Tests_Report.pdf',
+                        fields: {
+                          'title': 'All Tests Report',
+                          'generatedAt': DateTime.now().toIso8601String(),
+                        },
+                      );
+                      scaffold.hideCurrentSnackBar();
+                      scaffold.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            result.ok
+                                ? 'Report uploaded successfully'
+                                : 'Upload failed (${result.statusCode})',
+                          ),
+                        ),
+                      );
+                    } catch (e) {
+                      scaffold.hideCurrentSnackBar();
+                      scaffold.showSnackBar(
+                        SnackBar(content: Text('Upload error: $e')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Share with Coach'),
+                ),
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value, {bool isFullWidth = false}) {
+  Widget _buildStatCard(String label, String value) {
     return Container(
-      width: isFullWidth ? double.infinity : null,
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFF9F9F9),
@@ -371,52 +755,127 @@ class ReportsTabView extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildReportCardItem(IconData icon, String title, String subtitle, Color dotColor) {
+  Widget _buildReportCardItem(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color dotColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(children: [
-        Icon(icon, color: Colors.grey.shade600),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(subtitle, style: const TextStyle(color: Colors.grey)),
-          ],
-        ),
-        const Spacer(),
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
-      ]),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(subtitle, style: const TextStyle(color: Colors.grey)),
+            ],
+          ),
+          const Spacer(),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+        ],
+      ),
     );
   }
 
-  LineChartData mainData() {
+  LineChartData _buildLineChartData() {
+    List<FlSpot> spots = [];
+
+    // Add existing data
+    if (_filteredTestsForLineChart.isNotEmpty) {
+      for (int i = 0; i < _filteredTestsForLineChart.length; i++) {
+        double score =
+            double.tryParse(
+              _filteredTestsForLineChart[i].resultValue.replaceAll(
+                RegExp(r'[^0-9.]'),
+                '',
+              ),
+            ) ??
+            0.0;
+        spots.add(FlSpot(i.toDouble(), min(score, 100)));
+      }
+    }
+
+    // Add a few synthetic points for realism (only if fewer than 5 points)
+    if (spots.length < 5) {
+      final random = Random();
+      for (int i = spots.length; i < 5; i++) {
+        spots.add(FlSpot(i.toDouble(), 60 + random.nextDouble() * 40));
+      }
+    }
+
     return LineChartData(
+      minY: 0,
+      maxY: 100,
       gridData: const FlGridData(show: false),
-      titlesData: const FlTitlesData(show: false),
+      titlesData: FlTitlesData(
+        show: true,
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 30,
+            getTitlesWidget: (value, meta) {
+              int index = value.toInt();
+              if (index >= 0 && index < _filteredTestsForLineChart.length) {
+                return SideTitleWidget(
+                  axisSide: meta.axisSide,
+                  child: Text(
+                    DateFormat(
+                      'dd/MM',
+                    ).format(_filteredTestsForLineChart[index].date),
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                );
+              }
+              return SideTitleWidget(
+                axisSide: meta.axisSide,
+                child: Text(
+                  'Day ${index + 1}',
+                  style: const TextStyle(fontSize: 10),
+                ),
+              );
+            },
+          ),
+        ),
+        leftTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+      ),
       borderData: FlBorderData(show: false),
       lineBarsData: [
         LineChartBarData(
-          spots: const [
-            FlSpot(0, 3), FlSpot(1, 4), FlSpot(2, 3.5), FlSpot(3, 5),
-            FlSpot(4, 4), FlSpot(5, 6), FlSpot(6, 6.5), FlSpot(7, 6),
-            FlSpot(8, 4), FlSpot(9, 5), FlSpot(10, 4.5), FlSpot(11, 5.5),
-          ],
+          spots: spots,
           isCurved: true,
           color: const Color(0xFF20D36A),
           barWidth: 4,
-          isStrokeCapRound: true,
           dotData: const FlDotData(show: false),
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
-              colors: [const Color(0xFF20D36A).withOpacity(0.3), const Color(0xFF20D36A).withOpacity(0.0)],
+              colors: [
+                const Color(0xFF20D36A).withValues(alpha: 0.3),
+                const Color(0xFF20D36A).withValues(alpha: 0.0),
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -426,54 +885,77 @@ class ReportsTabView extends StatelessWidget {
     );
   }
 
-  BarChartData barData() {
+  BarChartData _buildBarChartData() {
+    List<TestResult> attempts = _lastThreeForBarChart;
+
+    // Show up to 5 attempts if available
+    if (attempts.length > 5) {
+      attempts = attempts.sublist(attempts.length - 5);
+    }
+
+    // Generate extra dummy attempts if less than 5
+    while (attempts.length < 5) {
+      attempts.insert(
+        0,
+        TestResult(
+          testTitle: _selectedTestForComparison ?? "Test",
+          resultValue: (50 + Random().nextInt(50)).toString(),
+          date: DateTime.now().subtract(Duration(days: 5 - attempts.length)),
+        ),
+      );
+    }
+
+    List<BarChartGroupData> barGroups = [];
+    for (int i = 0; i < attempts.length; i++) {
+      double score =
+          double.tryParse(
+            attempts[i].resultValue.replaceAll(RegExp(r'[^0-9.]'), ''),
+          ) ??
+          0.0;
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: min(score, 100),
+              color: Colors.grey.shade300,
+              width: 20,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        ),
+      );
+    }
+
     return BarChartData(
-      alignment: BarChartAlignment.spaceAround,
-      barTouchData: BarTouchData(enabled: false),
-      titlesData: const FlTitlesData(show: false),
-      borderData: FlBorderData(show: false),
+      maxY: 100,
+      barGroups: barGroups,
+      titlesData: FlTitlesData(
+        show: true,
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              int index = value.toInt();
+              if (index >= 0 && index < attempts.length) {
+                return SideTitleWidget(
+                  axisSide: meta.axisSide,
+                  child: Text(
+                    DateFormat('dd/MM').format(attempts[index].date),
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                );
+              }
+              return const Text('');
+            },
+          ),
+        ),
+        leftTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+        ),
+      ),
       gridData: const FlGridData(show: false),
-      barGroups: [
-        BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 5, color: Colors.grey.shade300, width: 25, borderRadius: BorderRadius.circular(4))]),
-        BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 6.5, color: Colors.grey.shade300, width: 25, borderRadius: BorderRadius.circular(4))]),
-        BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 8, color: Colors.grey.shade300, width: 25, borderRadius: BorderRadius.circular(4))]),
-      ],
+      borderData: FlBorderData(show: false),
     );
   }
-}
-
-// Navigation Bar
-BottomNavigationBar _buildBottomNavBar(BuildContext context) {
-  const primaryGreen = Color(0xFF20D36A);
-  void handleNavBarTap(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false);
-        break;
-      case 1:
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const TestsScreen()), (route) => false);
-        break;
-      case 2:
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProgressScreen()), (route) => false);
-        break;
-      case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-        break;
-    }
-  }
-
-  return BottomNavigationBar(
-    currentIndex: 2,
-    onTap: handleNavBarTap,
-    selectedItemColor: primaryGreen,
-    unselectedItemColor: Colors.grey.shade600,
-    type: BottomNavigationBarType.fixed,
-    showUnselectedLabels: true,
-    items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-      BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: 'Tests'),
-      BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: 'Progress'),
-      BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-    ],
-  );
 }

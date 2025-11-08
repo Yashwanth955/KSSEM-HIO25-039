@@ -64,18 +64,22 @@ class _VideoPreviewScreenState extends State<VideoPreviewScreen> {
           Center(
             child: _controller.value.isInitialized
                 ? AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: GestureDetector(
-                  onTap: _togglePlayback,
-                  child: VideoPlayer(_controller)),
-            )
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: GestureDetector(
+                      onTap: _togglePlayback,
+                      child: VideoPlayer(_controller),
+                    ),
+                  )
                 : const CircularProgressIndicator(), // Show loading spinner
           ),
           // Play/Pause icon overlay
           Center(
             child: !_isPlaying
-                ? Icon(Icons.play_arrow,
-                color: Colors.white.withOpacity(0.7), size: 80)
+                ? Icon(
+                    Icons.play_arrow,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 80,
+                  )
                 : null,
           ),
           // Close button in the top corner
@@ -108,41 +112,46 @@ class _VideoPreviewScreenState extends State<VideoPreviewScreen> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    (route) => false, // This removes all previous routes
+                (route) => false, // This removes all previous routes
               );
               break;
             case 1: // Tests
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const TestsScreen()),
-                    (route) => false,
+                (route) => false,
               );
               break;
             case 2: // Progress
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const ProgressScreen()),
-                    (route) => false,
+                (route) => false,
               );
               break;
             case 3: // Profile
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    (route) => false,
+                (route) => false,
               );
               break;
           }
         },
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Home'),
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Tests'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.assignment), label: 'Tests'),
+            icon: Icon(Icons.show_chart_outlined),
+            label: 'Progress',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.show_chart_outlined), label: 'Progress'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profile'),
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
         ],
       ),
     );

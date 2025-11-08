@@ -1,13 +1,33 @@
 // lib/match_model.dart
-import 'package:isar/isar.dart';
 
-part 'match_model.g.dart';
-
-@collection
 class Match {
-  Id id = Isar.autoIncrement;
-  late String sponsorName;
-  late String athleteName;
-  late String matchReason; // e.g., "High performance in Sprinting"
-  late DateTime dateMatched;
+  int? id;
+  String sponsorName;
+  String athleteName;
+  String matchReason; // e.g., "High performance in Sprinting"
+  DateTime dateMatched;
+
+  Match({
+    this.id,
+    required this.sponsorName,
+    required this.athleteName,
+    required this.matchReason,
+    required this.dateMatched,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'sponsorName': sponsorName,
+    'athleteName': athleteName,
+    'matchReason': matchReason,
+    'dateMatched': dateMatched.toIso8601String(),
+  };
+
+  factory Match.fromMap(Map<String, dynamic> m) => Match(
+    id: m['id'] as int?,
+    sponsorName: m['sponsorName'] as String,
+    athleteName: m['athleteName'] as String,
+    matchReason: m['matchReason'] as String,
+    dateMatched: DateTime.parse(m['dateMatched'] as String),
+  );
 }

@@ -1,21 +1,34 @@
+
 {
   "@@locale": "kn",
-  "appTitle": "[ಸಾಧಕ್ - Sadhak in Kannada]",
-  "cameraScreenTitle": "[ಕ್ಯಾಮೆರಾ - Camera in Kannada]",
-  "startTestButton": "[ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ - Start Test in Kannada]",
-  "stopTestButton": "[ಪರೀಕ್ಷೆಯನ್ನು ನಿಲ್ಲಿಸಿ - Stop Test in Kannada]",
-  "testInstructionsTitle": "[ಪರೀಕ್ಷಾ ಸೂಚನೆಗಳು - Test Instructions in Kannada]",
-  "loginScreenAppName": "[Sadhaka - Kannada]",
-  "loginWelcomeBack": "[Welcome Back - Kannada]",
-  "loginEmailHint": "[Email or Username - Kannada]",
-  "loginPasswordHint": "[Password - Kannada]",
-  "loginForgotPassword": "[Forgot Password? - Kannada]",
-  "loginButton": "[Login - Kannada]",
-  "loginFailedError": "[Login failed. Please check your credentials. - Kannada]",
-  "loginOrContinueWith": "[Or continue with - Kannada]",
-  "loginContinueWithGoogle": "[Continue with Google - Kannada]",
-  "loginContinueWithApple": "[Continue with Apple - Kannada]",
-  "loginDontHaveAccount": "[Don't have an account? - Kannada]",
-  "loginSignUpButton": "[Sign Up - Kannada]",
-  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Kannada]"
+  "appTitle": "ಸಾಧಕ್",
+  "homeScreenGreeting": "ನಮಸ್ಕಾರ {userName} 👋, ಇಂದು ನಿಮ್ಮ ಫಿಟ್ನೆಸ್ ಪರೀಕ್ಷಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಾ?",
+  "@homeScreenGreeting": {
+    "placeholders": {
+      "userName": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "ಭಾಷೆ",
+  "english": "ಆಂಗ್ಲ",
+  "hindi": "ಹಿಂದಿ",
+  "kannada": "ಕನ್ನಡ",
+  "startFitnessTest": "ಫಿಟ್ನೆಸ್ ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ",
+  "bestScore": "ಅತ್ಯುತ್ತಮ ಸ್ಕೋರ್",
+  "leaderboard": "ನಾಯಕ ಮಂಡಳಿ",
+  "badges": "ಬ್ಯಾಡ್ಜ್‌ಗಳು",
+  "loginFailedError": "ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ರುಜುವಾತುಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+  "loginScreenAppName": "ಸಾಧಕ್",
+  "loginWelcomeBack": "ಮರಳಿ ಸ್ವಾಗತ!",
+  "loginEmailHint": "ಇಮೇಲ್",
+  "loginPasswordHint": "ಪಾಸ್ವರ್ಡ್",
+  "loginForgotPassword": "ಪಾಸ್ವರ್ಡ್ ಮರೆತಿರಾ?",
+  "loginButton": "ಲಾಗಿನ್",
+  "loginOrContinueWith": "ಅಥವಾ ಇದರೊಂದಿಗೆ ಮುಂದುವರಿಸಿ",
+  "loginContinueWithGoogle": "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ",
+  "loginContinueWithApple": "Apple ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ",
+  "loginDontHaveAccount": "ಖಾತೆ ಇಲ್ಲವೇ?",
+  "loginSignUpButton": "ಸೈನ್ ಅಪ್ ಮಾಡಿ",
+  "loginMotivationalQuote": "ದೇಹವು ಮನಸ್ಸು ನಂಬುವುದನ್ನು ಸಾಧಿಸುತ್ತದೆ."
 }

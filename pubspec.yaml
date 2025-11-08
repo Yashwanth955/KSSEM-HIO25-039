@@ -36,13 +36,15 @@ dependencies:
   video_player: ^2.8.6
   table_calendar: ^3.1.1
   path_provider: ^2.1.3
+  path: ^1.8.3
+  http: ^1.2.2 # added for report upload
+  supabase_flutter: ^2.5.0
   firebase_core: ^2.31.0
   firebase_auth: ^4.19.4
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.0
   cloud_firestore: ^4.15.8
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  # isar removed; using sqflite instead
   url_launcher: ^6.3.0
   google_mlkit_pose_detection: ^0.11.0
   pdf: ^3.10.8
@@ -50,7 +52,9 @@ dependencies:
   flutter_tts: ^4.0.2
   flutter_localizations:
     sdk: flutter
-  intl: ^0.20.2 # <--- Updated this line
+  intl: ^0.20.2 
+  supabase_flutter: ^2.6.0
+  
     # ...
   # Use the latest version# Or the latest version
 
@@ -59,11 +63,12 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   image_picker: any
+  sqflite: ^2.2.8
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: ^2.4.9
-  isar_generator: ^3.1.0+1
+  # isar_generator removed as Isar is replaced by SQLite
   flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
@@ -76,10 +81,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-  generate: true # This line should already exist
+  generate: true 
   assets:
-    - assests/images/
-    - assests/demovideo/
+    - assets/images/
+    - assets/demovideo/pushup_instruction.mp4
     # Add or verify this line
   #   - images/a_dot_ham.jpeg
 

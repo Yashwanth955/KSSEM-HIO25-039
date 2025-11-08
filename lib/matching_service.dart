@@ -8,9 +8,11 @@ class MatchingService {
 
   // This function runs the matching logic
   Future<void> findAndSaveMatches() async {
-    final user = await _isarService.getCurrentUserProfile(); // Assuming one user for now
+    final user = await _isarService
+        .getCurrentUserProfile(); // Assuming one user for now
     final results = await _isarService.getAllTestResults();
-    final sponsors = await _isarService.getAllSponsors(); // We'll need to add this method
+    final sponsors = await _isarService
+        .getAllSponsors(); // We'll need to add this method
 
     if (user == null) return;
 
@@ -22,17 +24,19 @@ class MatchingService {
       if (sponsor.focusSport.toLowerCase() == user.sport?.toLowerCase()) {
         // Find a relevant test result
         final relevantResult = results.firstWhere(
-              (r) => r.testTitle.toLowerCase().contains(user.sport!.toLowerCase()),
-          orElse: () => TestResult(), // Return empty result if not found
+          (r) => r.testTitle.toLowerCase().contains(user.sport!.toLowerCase()),
+          orElse: () =>
+              TestResult(testTitle: '', resultValue: '', date: DateTime.now()),
         );
 
         // Simple condition: if a relevant test was found
         if (relevantResult.testTitle.isNotEmpty) {
-          final match = Match()
-            ..sponsorName = sponsor.name
-            ..athleteName = user.name ?? 'Athlete'
-            ..matchReason = 'Strong performance in ${user.sport}'
-            ..dateMatched = DateTime.now();
+          final match = Match(
+            sponsorName: sponsor.name,
+            athleteName: user.name ?? 'Athlete',
+            matchReason: 'Strong performance in ${user.sport}',
+            dateMatched: DateTime.now(),
+          );
           newMatches.add(match);
         }
       }

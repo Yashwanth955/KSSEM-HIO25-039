@@ -1,21 +1,33 @@
+
 {
-  "@@locale": "hi",
-  "appTitle": "[साधक - Sadhak in Hindi]",
-  "cameraScreenTitle": "[कैमरा - Camera in Hindi]",
-  "startTestButton": "[परीक्षण शुरू करें - Start Test in Hindi]",
-  "stopTestButton": "[परीक्षण रोकें - Stop Test in Hindi]",
-  "testInstructionsTitle": "[परीक्षण निर्देश - Test Instructions in Hindi]",
-  "loginScreenAppName": "[Sadhaka - Hindi]",
-  "loginWelcomeBack": "[Welcome Back - Hindi]",
-  "loginEmailHint": "[Email or Username - Hindi]",
-  "loginPasswordHint": "[Password - Hindi]",
-  "loginForgotPassword": "[Forgot Password? - Hindi]",
-  "loginButton": "[Login - Hindi]",
-  "loginFailedError": "[Login failed. Please check your credentials. - Hindi]",
-  "loginOrContinueWith": "[Or continue with - Hindi]",
-  "loginContinueWithGoogle": "[Continue with Google - Hindi]",
-  "loginContinueWithApple": "[Continue with Apple - Hindi]",
-  "loginDontHaveAccount": "[Don't have an account? - Hindi]",
-  "loginSignUpButton": "[Sign Up - Hindi]",
-  "loginMotivationalQuote": "[\"The only bad workout is the one that didn't happen.\" - Hindi]"
+  "appTitle": "साधक",
+  "homeScreenGreeting": "नमस्ते {userName} 👋, आज अपनी फिटनेस का परीक्षण करने के लिए तैयार हैं?",
+  "@homeScreenGreeting": {
+    "placeholders": {
+      "userName": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "भाषा",
+  "english": "अंग्रेज़ी",
+  "hindi": "हिंदी",
+  "kannada": "कन्नड़",
+  "startFitnessTest": "फिटनेस टेस्ट शुरू करें",
+  "bestScore": "सर्वश्रेष्ठ स्कोर",
+  "leaderboard": "लीडरबोर्ड",
+  "badges": "बैज",
+  "loginFailedError": "लॉगिन विफल। कृपया अपनी क्रेडेंशियल जांचें।",
+  "loginScreenAppName": "साधक",
+  "loginWelcomeBack": "वापसी पर स्वागत है!",
+  "loginEmailHint": "ईमेल",
+  "loginPasswordHint": "पासवर्ड",
+  "loginForgotPassword": "पासवर्ड भूल गए?",
+  "loginButton": "लॉगिन",
+  "loginOrContinueWith": "या इसके साथ जारी रखें",
+  "loginContinueWithGoogle": "Google के साथ जारी रखें",
+  "loginContinueWithApple": "Apple के साथ जारी रखें",
+  "loginDontHaveAccount": "खाता नहीं है?",
+  "loginSignUpButton": "साइन अप करें",
+  "loginMotivationalQuote": "शरीर वह हासिल करता है जो मन मानता है।"
 }

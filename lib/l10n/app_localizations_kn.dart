@@ -9,60 +9,74 @@ class AppLocalizationsKn extends AppLocalizations {
   AppLocalizationsKn([String locale = 'kn']) : super(locale);
 
   @override
-  String get appTitle => '[ಸಾಧಕ್ - Sadhak in Kannada]';
+  String get appTitle => 'ಸಾಧಕ್';
 
   @override
-  String get cameraScreenTitle => '[ಕ್ಯಾಮೆರಾ - Camera in Kannada]';
+  String homeScreenGreeting(String userName) {
+    return 'ನಮಸ್ಕಾರ $userName 👋, ಇಂದು ನಿಮ್ಮ ಫಿಟ್ನೆಸ್ ಪರೀಕ್ಷಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಾ?';
+  }
 
   @override
-  String get startTestButton =>
-      '[ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ - Start Test in Kannada]';
+  String get language => 'ಭಾಷೆ';
 
   @override
-  String get stopTestButton => '[ಪರೀಕ್ಷೆಯನ್ನು ನಿಲ್ಲಿಸಿ - Stop Test in Kannada]';
+  String get english => 'ಆಂಗ್ಲ';
 
   @override
-  String get testInstructionsTitle =>
-      '[ಪರೀಕ್ಷಾ ಸೂಚನೆಗಳು - Test Instructions in Kannada]';
+  String get hindi => 'ಹಿಂದಿ';
 
   @override
-  String get loginScreenAppName => '[Sadhaka - Kannada]';
+  String get kannada => 'ಕನ್ನಡ';
 
   @override
-  String get loginWelcomeBack => '[Welcome Back - Kannada]';
+  String get startFitnessTest => 'ಫಿಟ್ನೆಸ್ ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ';
 
   @override
-  String get loginEmailHint => '[Email or Username - Kannada]';
+  String get bestScore => 'ಅತ್ಯುತ್ತಮ ಸ್ಕೋರ್';
 
   @override
-  String get loginPasswordHint => '[Password - Kannada]';
+  String get leaderboard => 'ನಾಯಕ ಮಂಡಳಿ';
 
   @override
-  String get loginForgotPassword => '[Forgot Password? - Kannada]';
-
-  @override
-  String get loginButton => '[Login - Kannada]';
+  String get badges => 'ಬ್ಯಾಡ್ಜ್‌ಗಳು';
 
   @override
   String get loginFailedError =>
-      '[Login failed. Please check your credentials. - Kannada]';
+      'ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ರುಜುವಾತುಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.';
 
   @override
-  String get loginOrContinueWith => '[Or continue with - Kannada]';
+  String get loginScreenAppName => 'ಸಾಧಕ್';
 
   @override
-  String get loginContinueWithGoogle => '[Continue with Google - Kannada]';
+  String get loginWelcomeBack => 'ಮರಳಿ ಸ್ವಾಗತ!';
 
   @override
-  String get loginContinueWithApple => '[Continue with Apple - Kannada]';
+  String get loginEmailHint => 'ಇಮೇಲ್';
 
   @override
-  String get loginDontHaveAccount => '[Don\'t have an account? - Kannada]';
+  String get loginPasswordHint => 'ಪಾಸ್ವರ್ಡ್';
 
   @override
-  String get loginSignUpButton => '[Sign Up - Kannada]';
+  String get loginForgotPassword => 'ಪಾಸ್ವರ್ಡ್ ಮರೆತಿರಾ?';
 
   @override
-  String get loginMotivationalQuote =>
-      '[\"The only bad workout is the one that didn\'t happen.\" - Kannada]';
+  String get loginButton => 'ಲಾಗಿನ್';
+
+  @override
+  String get loginOrContinueWith => 'ಅಥವಾ ಇದರೊಂದಿಗೆ ಮುಂದುವರಿಸಿ';
+
+  @override
+  String get loginContinueWithGoogle => 'Google ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ';
+
+  @override
+  String get loginContinueWithApple => 'Apple ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ';
+
+  @override
+  String get loginDontHaveAccount => 'ಖಾತೆ ಇಲ್ಲವೇ?';
+
+  @override
+  String get loginSignUpButton => 'ಸೈನ್ ಅಪ್ ಮಾಡಿ';
+
+  @override
+  String get loginMotivationalQuote => 'ದೇಹವು ಮನಸ್ಸು ನಂಬುವುದನ್ನು ಸಾಧಿಸುತ್ತದೆ.';
 }

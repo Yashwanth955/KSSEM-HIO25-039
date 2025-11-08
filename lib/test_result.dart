@@ -1,18 +1,48 @@
 // lib/test_result.dart
 
-import 'package:isar/isar.dart'; // Should be Isar import
-
-part 'test_result.g.dart'; // For Isar code generation
-
-@collection // Should be @collection for Isar
 class TestResult {
-  Id id = Isar.autoIncrement; // Isar Id
+  int? id;
 
-  late String testTitle; // No HiveField annotation
+  String testTitle;
+  String resultValue;
+  DateTime date;
+  String? videoPath;
 
-  late String resultValue; // No HiveField annotation
+  // New fields
+  int? wrongRepCount;
+  bool? formCorrect;
+  String? feedback;
 
-  late DateTime date; // No HiveField annotation
+  TestResult({
+    this.id,
+    required this.testTitle,
+    required this.resultValue,
+    required this.date,
+    this.videoPath,
+    this.wrongRepCount,
+    this.formCorrect,
+    this.feedback,
+  });
 
-  String? videoPath; // No HiveField annotation
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'testTitle': testTitle,
+    'resultValue': resultValue,
+    'date': date.toIso8601String(),
+    'videoPath': videoPath,
+    'wrongRepCount': wrongRepCount,
+    'formCorrect': formCorrect == true ? 1 : 0,
+    'feedback': feedback,
+  };
+
+  factory TestResult.fromMap(Map<String, dynamic> m) => TestResult(
+    id: m['id'] as int?,
+    testTitle: m['testTitle'] as String,
+    resultValue: m['resultValue'] as String,
+    date: DateTime.parse(m['date'] as String),
+    videoPath: m['videoPath'] as String?,
+    wrongRepCount: m['wrongRepCount'] as int?,
+    formCorrect: (m['formCorrect'] as int?) == 1,
+    feedback: m['feedback'] as String?,
+  );
 }

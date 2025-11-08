@@ -30,12 +30,17 @@ class _StreaksScreenState extends State<StreaksScreen> {
 
   // NEW: Method to fetch results from Isar and format them for the calendar
   Future<Map<DateTime, List<String>>> _loadEventsFromDb() async {
-    final allResults = await isarService.getAllTestResults(); // Changed from hiveService
+    final allResults = await isarService
+        .getAllTestResults(); // Changed from hiveService
     final Map<DateTime, List<String>> events = {};
 
     for (final result in allResults) {
       // Use UTC to ignore time zones and only compare the date part
-      final date = DateTime.utc(result.date.year, result.date.month, result.date.day);
+      final date = DateTime.utc(
+        result.date.year,
+        result.date.month,
+        result.date.day,
+      );
       if (events[date] == null) {
         events[date] = [];
       }
@@ -49,7 +54,10 @@ class _StreaksScreenState extends State<StreaksScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Consistency & Streaks', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Consistency & Streaks',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
@@ -110,22 +118,30 @@ class _StreaksScreenState extends State<StreaksScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
                         'Tests on ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const Divider(height: 24),
                     Expanded(
                       child: selectedDayEvents.isEmpty
-                          ? const Center(child: Text('No tests were taken on this day.'))
+                          ? const Center(
+                              child: Text('No tests were taken on this day.'),
+                            )
                           : ListView.builder(
-                        itemCount: selectedDayEvents.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            leading: const Icon(Icons.assignment_turned_in, color: Color(0xFF20D36A)),
-                            title: Text(selectedDayEvents[index]),
-                          );
-                        },
-                      ),
+                              itemCount: selectedDayEvents.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  leading: const Icon(
+                                    Icons.assignment_turned_in,
+                                    color: Color(0xFF20D36A),
+                                  ),
+                                  title: Text(selectedDayEvents[index]),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
@@ -167,7 +183,7 @@ class _StreaksScreenState extends State<StreaksScreen> {
         shape: BoxShape.circle,
       ),
       selectedDecoration: BoxDecoration(
-        color: primaryGreen.withOpacity(0.5),
+        color: primaryGreen.withValues(alpha: 0.5),
         shape: BoxShape.circle,
       ),
       todayDecoration: BoxDecoration(

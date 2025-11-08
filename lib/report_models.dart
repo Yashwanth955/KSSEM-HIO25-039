@@ -1,5 +1,6 @@
 // lib/report_models.dart
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -17,7 +18,11 @@ class CoachTip {
   final String title;
   final String description;
 
-  CoachTip({required this.icon, required this.title, required this.description});
+  CoachTip({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
 }
 
 // The main data model for the entire report screen
@@ -33,7 +38,8 @@ class TestReport {
   final String progressValue;
   final String progressPeriod;
   final String progressTrend;
-  final List<FlSpot> progressChartData; // Using FlSpot for a line chart
+  final List<FlSpot> progressChartData;
+  final XFile? videoFile;
 
   TestReport({
     required this.testTitle,
@@ -48,6 +54,7 @@ class TestReport {
     required this.progressPeriod,
     required this.progressTrend,
     required this.progressChartData,
+    this.videoFile,
   });
 
   TestReport copyWith({
@@ -63,6 +70,7 @@ class TestReport {
     String? progressPeriod,
     String? progressTrend,
     List<FlSpot>? progressChartData,
+    XFile? videoFile,
   }) {
     return TestReport(
       testTitle: testTitle ?? this.testTitle,
@@ -77,6 +85,7 @@ class TestReport {
       progressPeriod: progressPeriod ?? this.progressPeriod,
       progressTrend: progressTrend ?? this.progressTrend,
       progressChartData: progressChartData ?? this.progressChartData,
+      videoFile: videoFile ?? this.videoFile,
     );
   }
 }

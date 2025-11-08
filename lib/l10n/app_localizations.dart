@@ -104,112 +104,142 @@ abstract class AppLocalizations {
     Locale('te'),
   ];
 
-  /// The title of the application
+  /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
   /// **'Sadhak'**
   String get appTitle;
 
-  /// Title for the camera screen
+  /// No description provided for @homeScreenGreeting.
   ///
   /// In en, this message translates to:
-  /// **'Camera'**
-  String get cameraScreenTitle;
+  /// **'Hi {userName} 👋, ready to test your fitness today?'**
+  String homeScreenGreeting(String userName);
 
-  /// Label for the start test button
+  /// No description provided for @language.
   ///
   /// In en, this message translates to:
-  /// **'Start Test'**
-  String get startTestButton;
+  /// **'Language'**
+  String get language;
 
-  /// Label for the stop test button
+  /// No description provided for @english.
   ///
   /// In en, this message translates to:
-  /// **'Stop Test'**
-  String get stopTestButton;
+  /// **'English'**
+  String get english;
 
-  /// Title for the test instructions section/screen
+  /// No description provided for @hindi.
   ///
   /// In en, this message translates to:
-  /// **'Test Instructions'**
-  String get testInstructionsTitle;
+  /// **'Hindi'**
+  String get hindi;
 
-  /// App name displayed on the login screen
+  /// No description provided for @kannada.
   ///
   /// In en, this message translates to:
-  /// **'Sadhaka'**
-  String get loginScreenAppName;
+  /// **'Kannada'**
+  String get kannada;
 
-  /// Welcome message on the login screen
+  /// No description provided for @startFitnessTest.
   ///
   /// In en, this message translates to:
-  /// **'Welcome Back'**
-  String get loginWelcomeBack;
+  /// **'Start Fitness Test'**
+  String get startFitnessTest;
 
-  /// Hint text for the email/username input field
+  /// No description provided for @bestScore.
   ///
   /// In en, this message translates to:
-  /// **'Email or Username'**
-  String get loginEmailHint;
+  /// **'Best Score'**
+  String get bestScore;
 
-  /// Hint text for the password input field
+  /// No description provided for @leaderboard.
   ///
   /// In en, this message translates to:
-  /// **'Password'**
-  String get loginPasswordHint;
+  /// **'Leaderboard'**
+  String get leaderboard;
 
-  /// Text for the forgot password button
+  /// No description provided for @badges.
   ///
   /// In en, this message translates to:
-  /// **'Forgot Password?'**
-  String get loginForgotPassword;
+  /// **'Badges'**
+  String get badges;
 
-  /// Label for the login button
-  ///
-  /// In en, this message translates to:
-  /// **'Login'**
-  String get loginButton;
-
-  /// Error message shown on login failure
+  /// No description provided for @loginFailedError.
   ///
   /// In en, this message translates to:
   /// **'Login failed. Please check your credentials.'**
   String get loginFailedError;
 
-  /// Text indicating alternative login methods
+  /// No description provided for @loginScreenAppName.
+  ///
+  /// In en, this message translates to:
+  /// **'SADHAK'**
+  String get loginScreenAppName;
+
+  /// No description provided for @loginWelcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back!'**
+  String get loginWelcomeBack;
+
+  /// No description provided for @loginEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get loginEmailHint;
+
+  /// No description provided for @loginPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get loginPasswordHint;
+
+  /// No description provided for @loginForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get loginForgotPassword;
+
+  /// No description provided for @loginButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginButton;
+
+  /// No description provided for @loginOrContinueWith.
   ///
   /// In en, this message translates to:
   /// **'Or continue with'**
   String get loginOrContinueWith;
 
-  /// Label for the Google sign-in button
+  /// No description provided for @loginContinueWithGoogle.
   ///
   /// In en, this message translates to:
   /// **'Continue with Google'**
   String get loginContinueWithGoogle;
 
-  /// Label for the Apple sign-in button
+  /// No description provided for @loginContinueWithApple.
   ///
   /// In en, this message translates to:
   /// **'Continue with Apple'**
   String get loginContinueWithApple;
 
-  /// Prompt for users who don't have an account
+  /// No description provided for @loginDontHaveAccount.
   ///
   /// In en, this message translates to:
   /// **'Don\'t have an account?'**
   String get loginDontHaveAccount;
 
-  /// Label for the sign-up button/link
+  /// No description provided for @loginSignUpButton.
   ///
   /// In en, this message translates to:
   /// **'Sign Up'**
   String get loginSignUpButton;
 
-  /// Motivational quote at the bottom of the login screen
+  /// No description provided for @loginMotivationalQuote.
   ///
   /// In en, this message translates to:
-  /// **'\"The only bad workout is the one that didn\'t happen.\"'**
+  /// **'The body achieves what the mind believes.'**
   String get loginMotivationalQuote;
 }
 

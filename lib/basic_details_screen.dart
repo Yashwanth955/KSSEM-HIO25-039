@@ -7,7 +7,8 @@ import 'package:sadhak/isar_service.dart'; // CORRECTED PATH
 import 'package:sadhak/home_screen.dart'; // CORRECTED PATH
 import 'package:sadhak/app_state.dart'; // CORRECTED PATH
 import 'package:provider/provider.dart';
-import 'package:isar/isar.dart'; // Added Isar import
+import 'util/log.dart';
+// Removed Isar dependency import
 
 class BasicDetailsScreen extends StatefulWidget {
   final bool isEditing;
@@ -65,8 +66,11 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
   Future<void> _fetchUserProfileForCurrentUser() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
-      final profile = await _isarService.getUserProfileByFirebaseUid(firebaseUser.uid);
+      final profile = await _isarService.getUserProfileByFirebaseUid(
+        firebaseUser.uid,
+      );
       if (profile != null) {
+        if (!mounted) return;
         setState(() {
           _currentUserProfile = profile;
           _loadUserProfileData();
@@ -87,8 +91,10 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
       _isCoachUser = _currentUserProfile!.isCoachUser;
       _coachNameController.text = _currentUserProfile!.coachName ?? '';
       _coachMobileController.text = _currentUserProfile!.coachPhoneNumber ?? '';
-      _coachWhatsappController.text = _currentUserProfile!.coachWhatsappNumber ?? '';
-      _locationController.text = _currentUserProfile!.location ?? ''; // Load location
+      _coachWhatsappController.text =
+          _currentUserProfile!.coachWhatsappNumber ?? '';
+      _locationController.text =
+          _currentUserProfile!.location ?? ''; // Load location
       setState(() {});
     }
   }
@@ -104,55 +110,65 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_formKey.currentState!.validate()) {
-      final firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User not authenticated. Cannot save profile.")),
-        );
-        return;
-      }
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      final profileData = UserProfile(
-        firebaseUid: firebaseUser.uid,
-        name: _nameController.text.trim(),
-        email: firebaseUser.email,
-        mobileNumber: _mobileController.text.trim(),
-        age: int.tryParse(_ageController.text.trim()),
-        height: double.tryParse(_heightController.text.trim()),
-        weight: double.tryParse(_weightController.text.trim()),
-        sport: _sportController.text.trim(),
-        profilePhotoPath: _profilePhotoPath,
-        isCoachUser: _isCoachUser,
-        coachName: _isCoachUser ? _coachNameController.text.trim() : null,
-        coachPhoneNumber: _isCoachUser ? _coachMobileController.text.trim() : null,
-        coachWhatsappNumber: _isCoachUser ? _coachWhatsappController.text.trim() : null,
-        location: _locationController.text.trim(), // Save location
-        createdAt: _currentUserProfile?.createdAt ?? DateTime.now(),
-      )
-        ..id = _currentUserProfile?.id ?? Isar.autoIncrement;
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    // Capture context before async gaps
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final appState = Provider.of<AppState>(context, listen: false);
 
+    if (firebaseUser == null) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text("User not authenticated. Cannot save profile."),
+        ),
+      );
+      return;
+    }
 
-      try {
-        await _isarService.saveUserProfile(profileData);
-        Provider.of<AppState>(context, listen: false).setUserProfile(profileData);
+    final profileData = UserProfile(
+      id: _currentUserProfile?.id,
+      firebaseUid: firebaseUser.uid,
+      name: _nameController.text.trim(),
+      email: firebaseUser.email,
+      mobileNumber: _mobileController.text.trim(),
+      age: int.tryParse(_ageController.text.trim()),
+      height: double.tryParse(_heightController.text.trim()),
+      weight: double.tryParse(_weightController.text.trim()),
+      sport: _sportController.text.trim(),
+      profilePhotoPath: _profilePhotoPath,
+      isCoachUser: _isCoachUser,
+      coachName: _isCoachUser ? _coachNameController.text.trim() : null,
+      coachPhoneNumber: _isCoachUser
+          ? _coachMobileController.text.trim()
+          : null,
+      coachWhatsappNumber: _isCoachUser
+          ? _coachWhatsappController.text.trim()
+          : null,
+      location: _locationController.text.trim(), // Save location
+      createdAt: _currentUserProfile?.createdAt ?? DateTime.now(),
+    );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile saved successfully!')),
-        );
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-                (Route<dynamic> route) => false,
-          );
-        }
-      } catch (e) {
-        print("Error saving profile: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: ${e.toString()}')),
-        );
-      }
+    try {
+      await _isarService.saveUserProfile(profileData);
+      appState.setUserProfile(profileData);
+
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Profile saved successfully!')),
+      );
+
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (Route<dynamic> route) => false,
+      );
+    } catch (e) {
+      logDebug("Error saving profile: $e");
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Failed to save profile: ${e.toString()}')),
+      );
     }
   }
 
@@ -176,28 +192,46 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
       children: [
         TextFormField(
           controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.person)),
-          validator: (value) => value == null || value.isEmpty ? 'Please enter your name' : null,
+          decoration: const InputDecoration(
+            labelText: 'Name',
+            prefixIcon: Icon(Icons.person),
+          ),
+          validator: (value) =>
+              value == null || value.isEmpty ? 'Please enter your name' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _mobileController,
-          decoration: const InputDecoration(labelText: 'Mobile Number', prefixIcon: Icon(Icons.phone)),
+          decoration: const InputDecoration(
+            labelText: 'Mobile Number',
+            prefixIcon: Icon(Icons.phone),
+          ),
           keyboardType: TextInputType.phone,
           validator: (value) {
-            if (value == null || value.isEmpty) return 'Please enter your mobile number';
-            if (value.length < 10) return 'Mobile number must be at least 10 digits';
+            if (value == null || value.isEmpty) {
+              return 'Please enter your mobile number';
+            }
+            if (value.length < 10) {
+              return 'Mobile number must be at least 10 digits';
+            }
             return null;
           },
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _ageController,
-          decoration: const InputDecoration(labelText: 'Age', prefixIcon: Icon(Icons.cake)),
+          decoration: const InputDecoration(
+            labelText: 'Age',
+            prefixIcon: Icon(Icons.cake),
+          ),
           keyboardType: TextInputType.number,
           validator: (value) {
-            if (value == null || value.isEmpty) return 'Please enter your age';
-            if (int.tryParse(value) == null || int.parse(value) <= 0) return 'Please enter a valid age';
+            if (value == null || value.isEmpty) {
+              return 'Please enter your age';
+            }
+            if (int.tryParse(value) == null || int.parse(value) <= 0) {
+              return 'Please enter a valid age';
+            }
             return null;
           },
         ),
@@ -216,11 +250,19 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
             Expanded(
               child: TextFormField(
                 controller: _heightController,
-                decoration: const InputDecoration(labelText: 'Height (cm)', prefixIcon: Icon(Icons.height)),
+                decoration: const InputDecoration(
+                  labelText: 'Height (cm)',
+                  prefixIcon: Icon(Icons.height),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter height';
-                  if (double.tryParse(value) == null || double.parse(value) <= 0) return 'Valid height';
+                  if (value == null || value.isEmpty) {
+                    return 'Enter height';
+                  }
+                  if (double.tryParse(value) == null ||
+                      double.parse(value) <= 0) {
+                    return 'Valid height';
+                  }
                   return null;
                 },
               ),
@@ -229,11 +271,19 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
             Expanded(
               child: TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(labelText: 'Weight (kg)', prefixIcon: Icon(Icons.fitness_center)),
+                decoration: const InputDecoration(
+                  labelText: 'Weight (kg)',
+                  prefixIcon: Icon(Icons.fitness_center),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter weight';
-                  if (double.tryParse(value) == null || double.parse(value) <= 0) return 'Valid weight';
+                  if (value == null || value.isEmpty) {
+                    return 'Enter weight';
+                  }
+                  if (double.tryParse(value) == null ||
+                      double.parse(value) <= 0) {
+                    return 'Valid weight';
+                  }
                   return null;
                 },
               ),
@@ -243,8 +293,13 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
         const SizedBox(height: 16),
         TextFormField(
           controller: _sportController,
-          decoration: const InputDecoration(labelText: 'Primary Sport', prefixIcon: Icon(Icons.sports_soccer)),
-          validator: (value) => value == null || value.isEmpty ? 'Please enter your primary sport' : null,
+          decoration: const InputDecoration(
+            labelText: 'Primary Sport',
+            prefixIcon: Icon(Icons.sports_soccer),
+          ),
+          validator: (value) => value == null || value.isEmpty
+              ? 'Please enter your primary sport'
+              : null,
         ),
         const SizedBox(height: 20),
         SwitchListTile(
@@ -261,19 +316,31 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _coachNameController,
-            decoration: const InputDecoration(labelText: 'Coach Name (Your Name as Coach)', prefixIcon: Icon(Icons.badge)),
-            validator: (value) => _isCoachUser && (value == null || value.isEmpty) ? 'Please enter your coach name' : null,
+            decoration: const InputDecoration(
+              labelText: 'Coach Name (Your Name as Coach)',
+              prefixIcon: Icon(Icons.badge),
+            ),
+            validator: (value) =>
+                _isCoachUser && (value == null || value.isEmpty)
+                ? 'Please enter your coach name'
+                : null,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _coachMobileController,
-            decoration: const InputDecoration(labelText: 'Coach Mobile (Public)', prefixIcon: Icon(Icons.contact_phone)),
+            decoration: const InputDecoration(
+              labelText: 'Coach Mobile (Public)',
+              prefixIcon: Icon(Icons.contact_phone),
+            ),
             keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _coachWhatsappController,
-            decoration: const InputDecoration(labelText: 'Coach WhatsApp (Public)', prefixIcon: Icon(Icons.message)),
+            decoration: const InputDecoration(
+              labelText: 'Coach WhatsApp (Public)',
+              prefixIcon: Icon(Icons.message),
+            ),
             keyboardType: TextInputType.phone,
           ),
         ],
@@ -285,7 +352,11 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing || _currentUserProfile !=null ? 'Edit Profile' : 'Complete Your Profile'),
+        title: Text(
+          widget.isEditing || _currentUserProfile != null
+              ? 'Edit Profile'
+              : 'Complete Your Profile',
+        ),
         elevation: 1,
       ),
       body: SingleChildScrollView(
@@ -301,9 +372,15 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
                   child: CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.grey[300],
-                    backgroundImage: _profilePhotoPath != null ? FileImage(File(_profilePhotoPath!)) : null,
+                    backgroundImage: _profilePhotoPath != null
+                        ? FileImage(File(_profilePhotoPath!))
+                        : null,
                     child: _profilePhotoPath == null
-                        ? Icon(Icons.camera_alt, color: Colors.grey[700], size: 50)
+                        ? Icon(
+                            Icons.camera_alt,
+                            color: Colors.grey[700],
+                            size: 50,
+                          )
                         : null,
                   ),
                 ),
@@ -315,8 +392,13 @@ class _BasicDetailsScreenState extends State<BasicDetailsScreen> {
                 onPressed: _saveProfile,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Text('Save Profile'),
               ),

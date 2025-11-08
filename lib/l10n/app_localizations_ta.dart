@@ -12,17 +12,37 @@ class AppLocalizationsTa extends AppLocalizations {
   String get appTitle => '[சாதக் - Sadhak in Tamil]';
 
   @override
-  String get cameraScreenTitle => '[கேமரா - Camera in Tamil]';
+  String homeScreenGreeting(String userName) {
+    return 'Hi $userName 👋, ready to test your fitness today?';
+  }
 
   @override
-  String get startTestButton => '[சோதனையைத் தொடங்கு - Start Test in Tamil]';
+  String get language => 'Language';
 
   @override
-  String get stopTestButton => '[சோதனையை நிறுத்து - Stop Test in Tamil]';
+  String get english => 'English';
 
   @override
-  String get testInstructionsTitle =>
-      '[சோதனை வழிமுறைகள் - Test Instructions in Tamil]';
+  String get hindi => 'Hindi';
+
+  @override
+  String get kannada => 'Kannada';
+
+  @override
+  String get startFitnessTest => 'Start Fitness Test';
+
+  @override
+  String get bestScore => 'Best Score';
+
+  @override
+  String get leaderboard => 'Leaderboard';
+
+  @override
+  String get badges => 'Badges';
+
+  @override
+  String get loginFailedError =>
+      '[Login failed. Please check your credentials. - Tamil]';
 
   @override
   String get loginScreenAppName => '[Sadhaka - Tamil]';
@@ -41,10 +61,6 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get loginButton => '[Login - Tamil]';
-
-  @override
-  String get loginFailedError =>
-      '[Login failed. Please check your credentials. - Tamil]';
 
   @override
   String get loginOrContinueWith => '[Or continue with - Tamil]';

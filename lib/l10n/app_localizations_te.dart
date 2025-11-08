@@ -12,18 +12,37 @@ class AppLocalizationsTe extends AppLocalizations {
   String get appTitle => '[సాధక్ - Sadhak in Telugu]';
 
   @override
-  String get cameraScreenTitle => '[కెమెరా - Camera in Telugu]';
+  String homeScreenGreeting(String userName) {
+    return 'Hi $userName 👋, ready to test your fitness today?';
+  }
 
   @override
-  String get startTestButton =>
-      '[పరీక్షను ప్రారంభించండి - Start Test in Telugu]';
+  String get language => 'Language';
 
   @override
-  String get stopTestButton => '[పరీక్షను ఆపండి - Stop Test in Telugu]';
+  String get english => 'English';
 
   @override
-  String get testInstructionsTitle =>
-      '[పరీక్ష సూచనలు - Test Instructions in Telugu]';
+  String get hindi => 'Hindi';
+
+  @override
+  String get kannada => 'Kannada';
+
+  @override
+  String get startFitnessTest => 'Start Fitness Test';
+
+  @override
+  String get bestScore => 'Best Score';
+
+  @override
+  String get leaderboard => 'Leaderboard';
+
+  @override
+  String get badges => 'Badges';
+
+  @override
+  String get loginFailedError =>
+      '[Login failed. Please check your credentials. - Telugu]';
 
   @override
   String get loginScreenAppName => '[Sadhaka - Telugu]';
@@ -42,10 +61,6 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get loginButton => '[Login - Telugu]';
-
-  @override
-  String get loginFailedError =>
-      '[Login failed. Please check your credentials. - Telugu]';
 
   @override
   String get loginOrContinueWith => '[Or continue with - Telugu]';

@@ -86,11 +86,10 @@ class PosePainter extends CustomPainter {
         final landmark = landmarkEntry.value; // PoseLandmark object
         // Optionally, you can filter which landmarks to draw,
         // e.g., if (landmark.type == PoseLandmarkType.leftWrist || ...)
-        if (landmark != null) { // Check if landmark exists
-          final Offset landmarkPosition = scale(landmark.x, landmark.y);
-          canvas.drawCircle(landmarkPosition, 3.0, jointPaint); // Draw a circle with radius 3.0
-        }
-      }
+ // Check if landmark exists
+        final Offset landmarkPosition = scale(landmark.x, landmark.y);
+        canvas.drawCircle(landmarkPosition, 3.0, jointPaint); // Draw a circle with radius 3.0
+            }
     }
   }
 

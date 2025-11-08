@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-// NEW: Import the Hive service and model
-import 'isar_service.dart'; // Ensure this line is present and correct
+// Import services and models
+import 'isar_service.dart';
 import 'leaderboard_model.dart';
 
 // Import main screens for the bottom navigation bar
@@ -18,8 +18,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  // NEW: Create an instance of the IsarService
-  final isarService = IsarService(); 
+  final isarService = IsarService();
   int _selectedTabIndex = 0;
 
   @override
@@ -38,7 +37,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       body: Column(
         children: [
-          // Filter Buttons (UI only for now)
+          // Filter Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
@@ -60,20 +59,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ],
             ),
           ),
-          // UPDATED: User List now uses a FutureBuilder to get data from Isar
+          // User List
           Expanded(
             child: FutureBuilder<List<LeaderboardEntry>>(
-              future: isarService.getLeaderboard(), 
+              future: isarService.getLeaderboard(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error loading leaderboard.'));
+                }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('Leaderboard is empty.'));
                 }
-
                 final leaderboard = snapshot.data!;
-
                 return ListView.builder(
                   itemCount: leaderboard.length,
                   itemBuilder: (context, index) {
@@ -92,7 +92,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(context, 1),
+      bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
 
@@ -163,8 +163,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 }
 
-// A common bottom navigation bar for all secondary screens
-BottomNavigationBar _buildBottomNavBar(BuildContext context, int currentIndex) {
+// Common bottom navigation bar for all secondary screens
+BottomNavigationBar _buildBottomNavBar(BuildContext context) {
   void handleNavBarTap(int index) {
     switch (index) {
       case 0:
@@ -183,7 +183,7 @@ BottomNavigationBar _buildBottomNavBar(BuildContext context, int currentIndex) {
   }
 
   return BottomNavigationBar(
-    currentIndex: currentIndex,
+    currentIndex: 1, // Set to a relevant index for this screen, e.g., Tests
     onTap: handleNavBarTap,
     selectedItemColor: const Color(0xFF20D36A),
     unselectedItemColor: Colors.grey.shade600,

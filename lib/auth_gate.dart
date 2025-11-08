@@ -1,10 +1,13 @@
 // lib/auth_gate.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // ADDED
+import 'app_state.dart'; // ADDED
+import 'util/log.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 import 'isar_service.dart'; // Import IsarService
-import 'user_model.dart';   // Import UserProfile
+import 'user_model.dart'; // Import UserProfile
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -15,37 +18,41 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   final IsarService _isarService = IsarService();
-  bool _isUserDataInitialized = false;
 
-  Future<void> _initializeUserData(User firebaseUser) async {
-    // Check if user profile already exists to prevent re-seeding unnecessarily
-    if (_isUserDataInitialized) return;
+  Future<void> _fetchAndUpdateUserProfileInAppState(
+    BuildContext context,
+    User firebaseUser,
+  ) async {
+    // Capture AppState early to avoid using BuildContext after async gaps.
+    final appState = Provider.of<AppState>(context, listen: false);
+    UserProfile? userProfile = await _isarService.getUserProfileByFirebaseUid(
+      firebaseUser.uid,
+    );
 
-    // Create a default UserProfile for the logged-in user
-    // Some fields might be null or default if not available directly from Firebase auth
-    UserProfile newUserProfile = UserProfile(firebaseUid: firebaseUser.uid) // MODIFIED LINE
-      ..email = firebaseUser.email ?? 'N/A'
-      ..name = firebaseUser.displayName ?? 'New User' // Or a default name
-      ..age = 0 // Default age, user can update later
-      ..sport = 'Fitness' // Default sport
-      ..profilePhotoPath = firebaseUser.photoURL ?? '' // Or a default placeholder
-      ..height = 0.0 // Default height
-      ..weight = 0.0 // Default weight
-      ..mobileNumber = firebaseUser.phoneNumber ?? ''; // Default mobile
-
-    // Save the user profile using IsarService
-    // Assuming IsarService has a method to save or update the user profile.
-    // This method should ideally handle checking for existing users to prevent duplicates
-    // or to update existing records.
-    await _isarService.saveUserProfile(newUserProfile); // MODIFIED LINE
-
-    // Set a flag to indicate that user data initialization has been attempted.
-    if (mounted) {
-      setState(() {
-        _isUserDataInitialized = true;
-      });
+    if (userProfile == null) {
+      // Profile doesn't exist, create and save a new one
+      logDebug(
+        "AUTH_GATE: No profile found for UID: ${firebaseUser.uid}. Creating new one.",
+      );
+      userProfile = UserProfile(firebaseUid: firebaseUser.uid)
+        ..email = firebaseUser.email ?? 'N/A'
+        ..name = firebaseUser.displayName ?? 'New User'
+        ..age = 0
+        ..sport = 'Fitness'
+        ..profilePhotoPath = firebaseUser.photoURL ?? ''
+        ..height = 0.0
+        ..weight = 0.0
+        ..mobileNumber = firebaseUser.phoneNumber ?? '';
+      await _isarService.saveUserProfile(userProfile);
+    } else {
+      logDebug("AUTH_GATE: Profile found for UID: ${firebaseUser.uid}.");
     }
-    print("AUTH_GATE: User data initialization attempted for UID: ${firebaseUser.uid}");
+
+    // Update AppState
+    if (mounted) {
+      appState.setUserProfile(userProfile);
+    }
+    logDebug("AUTH_GATE: AppState updated for UID: ${firebaseUser.uid}");
   }
 
   @override
@@ -54,26 +61,46 @@ class _AuthGateState extends State<AuthGate> {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(key: ValueKey("auth_waiting")),
+            ),
+          );
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          // User is logged in, ensure their data is initialized in Isar
           final firebaseUser = snapshot.data!;
-          // Call initialization asynchronously
-          _initializeUserData(firebaseUser);
-          return const HomeScreen();
+          return FutureBuilder<void>(
+            future: _fetchAndUpdateUserProfileInAppState(context, firebaseUser),
+            builder: (context, asyncSnapshot) {
+              if (asyncSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      key: ValueKey("user_profile_loading"),
+                    ),
+                  ),
+                );
+              }
+              if (asyncSnapshot.hasError) {
+                logDebug(
+                  "AUTH_GATE: Error during _fetchAndUpdateUserProfileInAppState: ${asyncSnapshot.error}",
+                );
+                // Optionally, show an error screen or a retry mechanism
+                return const Scaffold(
+                  body: Center(child: Text("Error loading user data.")),
+                );
+              }
+              return const HomeScreen();
+            },
+          );
         } else {
-          // User is not logged in, reset the flag
-          if (_isUserDataInitialized) {
-             WidgetsBinding.instance.addPostFrameCallback((_) {
-               if (mounted) {
-                 setState(() {
-                  _isUserDataInitialized = false;
-                });
-               }
-             });
-          }
+          // User is not logged in, clear AppState's profile
+          // Ensure this is called safely, e.g., after the build phase if it causes rebuilds.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<AppState>(context, listen: false).setUserProfile(null);
+            logDebug("AUTH_GATE: User logged out, AppState profile cleared.");
+          });
           return const LoginScreen();
         }
       },

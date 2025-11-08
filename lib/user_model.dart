@@ -1,15 +1,10 @@
 // lib/user_model.dart
 
-import 'package:isar/isar.dart';
+import 'dart:convert';
 
-part 'user_model.g.dart'; // Required for the Isar generator
-
-@collection
-@Name("UserProfile") // Explicitly naming for clarity with Isar
 class UserProfile {
-  Id id = Isar.autoIncrement;
+  int? id;
 
-  @Index(unique: true, replace: true, caseSensitive: false)
   String firebaseUid;
 
   String? name;
@@ -20,6 +15,7 @@ class UserProfile {
   double? height; // in cm
   double? weight; // in kg
   String? profilePhotoPath;
+  String? gender; // ADDED
 
   // --- Coach Fields ---
   String? coachName;
@@ -33,6 +29,7 @@ class UserProfile {
   String? location;
 
   UserProfile({
+    this.id,
     required this.firebaseUid,
     this.name,
     this.email,
@@ -42,23 +39,18 @@ class UserProfile {
     this.height,
     this.weight,
     this.profilePhotoPath,
+    this.gender, // ADDED
     this.coachName,
     this.coachPhoneNumber,
     this.coachWhatsappNumber,
     this.isCoachUser = false,
-    // THE CRITICAL LINE:
-    // This should be what line 49 (or around there) looks like.
-    // It directly initializes the non-nullable 'assignedAthleteIds' field
-    // and defaults to an empty list.
     this.assignedAthleteIds = const [],
     this.createdAt,
     this.location,
-  }) {
-    // Constructor body can be empty if all fields are initialized via parameters
-  }
+  });
 
   UserProfile copyWith({
-    Id? id,
+    int? id,
     String? firebaseUid,
     String? name,
     String? email,
@@ -68,15 +60,17 @@ class UserProfile {
     double? height,
     double? weight,
     String? profilePhotoPath,
+    String? gender, // ADDED
     String? coachName,
     String? coachPhoneNumber,
     String? coachWhatsappNumber,
     bool? isCoachUser,
-    List<String>? assignedAthleteIds, // copyWith can accept nullable for flexibility
+    List<String>? assignedAthleteIds,
     DateTime? createdAt,
     String? location,
   }) {
     return UserProfile(
+      id: id ?? this.id,
       firebaseUid: firebaseUid ?? this.firebaseUid,
       name: name ?? this.name,
       email: email ?? this.email,
@@ -86,6 +80,7 @@ class UserProfile {
       height: height ?? this.height,
       weight: weight ?? this.weight,
       profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
+      gender: gender ?? this.gender, // ADDED
       coachName: coachName ?? this.coachName,
       coachPhoneNumber: coachPhoneNumber ?? this.coachPhoneNumber,
       coachWhatsappNumber: coachWhatsappNumber ?? this.coachWhatsappNumber,
@@ -93,6 +88,55 @@ class UserProfile {
       assignedAthleteIds: assignedAthleteIds ?? this.assignedAthleteIds,
       createdAt: createdAt ?? this.createdAt,
       location: location ?? this.location,
-    )..id = id ?? this.id;
+    );
   }
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'firebaseUid': firebaseUid,
+    'name': name,
+    'email': email,
+    'mobileNumber': mobileNumber,
+    'age': age,
+    'sport': sport,
+    'height': height,
+    'weight': weight,
+    'profilePhotoPath': profilePhotoPath,
+    'gender': gender,
+    'coachName': coachName,
+    'coachPhoneNumber': coachPhoneNumber,
+    'coachWhatsappNumber': coachWhatsappNumber,
+    'isCoachUser': isCoachUser ? 1 : 0,
+    'assignedAthleteIds': jsonEncode(assignedAthleteIds),
+    'createdAt': createdAt?.toIso8601String(),
+    'location': location,
+  };
+
+  factory UserProfile.fromMap(Map<String, dynamic> map) => UserProfile(
+    id: map['id'] as int?,
+    firebaseUid: map['firebaseUid'] as String,
+    name: map['name'] as String?,
+    email: map['email'] as String?,
+    mobileNumber: map['mobileNumber'] as String?,
+    age: map['age'] as int?,
+    sport: map['sport'] as String?,
+    height: map['height'] is num ? (map['height'] as num).toDouble() : null,
+    weight: map['weight'] is num ? (map['weight'] as num).toDouble() : null,
+    profilePhotoPath: map['profilePhotoPath'] as String?,
+    gender: map['gender'] as String?,
+    coachName: map['coachName'] as String?,
+    coachPhoneNumber: map['coachPhoneNumber'] as String?,
+    coachWhatsappNumber: map['coachWhatsappNumber'] as String?,
+    isCoachUser: (map['isCoachUser'] as int?) == 1,
+    assignedAthleteIds: map['assignedAthleteIds'] != null
+        ? List<String>.from(jsonDecode(map['assignedAthleteIds'] as String))
+        : <String>[],
+    createdAt: map['createdAt'] != null
+        ? DateTime.parse(map['createdAt'] as String)
+        : null,
+    location: map['location'] as String?,
+  );
+
+  // ADDED toJson for debugging and potential API use
+  Map<String, dynamic> toJson() => toMap();
 }

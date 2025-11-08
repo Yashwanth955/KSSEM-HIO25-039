@@ -12,25 +12,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Sadhak';
 
   @override
-  String get cameraScreenTitle => 'Camera';
+  String homeScreenGreeting(String userName) {
+    return 'Hi $userName 👋, ready to test your fitness today?';
+  }
 
   @override
-  String get startTestButton => 'Start Test';
+  String get language => 'Language';
 
   @override
-  String get stopTestButton => 'Stop Test';
+  String get english => 'English';
 
   @override
-  String get testInstructionsTitle => 'Test Instructions';
+  String get hindi => 'Hindi';
 
   @override
-  String get loginScreenAppName => 'Sadhaka';
+  String get kannada => 'Kannada';
 
   @override
-  String get loginWelcomeBack => 'Welcome Back';
+  String get startFitnessTest => 'Start Fitness Test';
 
   @override
-  String get loginEmailHint => 'Email or Username';
+  String get bestScore => 'Best Score';
+
+  @override
+  String get leaderboard => 'Leaderboard';
+
+  @override
+  String get badges => 'Badges';
+
+  @override
+  String get loginFailedError => 'Login failed. Please check your credentials.';
+
+  @override
+  String get loginScreenAppName => 'SADHAK';
+
+  @override
+  String get loginWelcomeBack => 'Welcome Back!';
+
+  @override
+  String get loginEmailHint => 'Email';
 
   @override
   String get loginPasswordHint => 'Password';
@@ -40,9 +60,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginButton => 'Login';
-
-  @override
-  String get loginFailedError => 'Login failed. Please check your credentials.';
 
   @override
   String get loginOrContinueWith => 'Or continue with';
@@ -61,5 +78,5 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginMotivationalQuote =>
-      '\"The only bad workout is the one that didn\'t happen.\"';
+      'The body achieves what the mind believes.';
 }

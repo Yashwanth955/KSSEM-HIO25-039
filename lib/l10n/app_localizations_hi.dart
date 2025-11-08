@@ -9,59 +9,73 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
-  String get appTitle => '[साधक - Sadhak in Hindi]';
+  String get appTitle => 'साधक';
 
   @override
-  String get cameraScreenTitle => '[कैमरा - Camera in Hindi]';
+  String homeScreenGreeting(String userName) {
+    return 'नमस्ते $userName 👋, आज अपनी फिटनेस का परीक्षण करने के लिए तैयार हैं?';
+  }
 
   @override
-  String get startTestButton => '[परीक्षण शुरू करें - Start Test in Hindi]';
+  String get language => 'भाषा';
 
   @override
-  String get stopTestButton => '[परीक्षण रोकें - Stop Test in Hindi]';
+  String get english => 'अंग्रेज़ी';
 
   @override
-  String get testInstructionsTitle =>
-      '[परीक्षण निर्देश - Test Instructions in Hindi]';
+  String get hindi => 'हिंदी';
 
   @override
-  String get loginScreenAppName => '[Sadhaka - Hindi]';
+  String get kannada => 'कन्नड़';
 
   @override
-  String get loginWelcomeBack => '[Welcome Back - Hindi]';
+  String get startFitnessTest => 'फिटनेस टेस्ट शुरू करें';
 
   @override
-  String get loginEmailHint => '[Email or Username - Hindi]';
+  String get bestScore => 'सर्वश्रेष्ठ स्कोर';
 
   @override
-  String get loginPasswordHint => '[Password - Hindi]';
+  String get leaderboard => 'लीडरबोर्ड';
 
   @override
-  String get loginForgotPassword => '[Forgot Password? - Hindi]';
+  String get badges => 'बैज';
 
   @override
-  String get loginButton => '[Login - Hindi]';
+  String get loginFailedError => 'लॉगिन विफल। कृपया अपनी क्रेडेंशियल जांचें।';
 
   @override
-  String get loginFailedError =>
-      '[Login failed. Please check your credentials. - Hindi]';
+  String get loginScreenAppName => 'साधक';
 
   @override
-  String get loginOrContinueWith => '[Or continue with - Hindi]';
+  String get loginWelcomeBack => 'वापसी पर स्वागत है!';
 
   @override
-  String get loginContinueWithGoogle => '[Continue with Google - Hindi]';
+  String get loginEmailHint => 'ईमेल';
 
   @override
-  String get loginContinueWithApple => '[Continue with Apple - Hindi]';
+  String get loginPasswordHint => 'पासवर्ड';
 
   @override
-  String get loginDontHaveAccount => '[Don\'t have an account? - Hindi]';
+  String get loginForgotPassword => 'पासवर्ड भूल गए?';
 
   @override
-  String get loginSignUpButton => '[Sign Up - Hindi]';
+  String get loginButton => 'लॉगिन';
 
   @override
-  String get loginMotivationalQuote =>
-      '[\"The only bad workout is the one that didn\'t happen.\" - Hindi]';
+  String get loginOrContinueWith => 'या इसके साथ जारी रखें';
+
+  @override
+  String get loginContinueWithGoogle => 'Google के साथ जारी रखें';
+
+  @override
+  String get loginContinueWithApple => 'Apple के साथ जारी रखें';
+
+  @override
+  String get loginDontHaveAccount => 'खाता नहीं है?';
+
+  @override
+  String get loginSignUpButton => 'साइन अप करें';
+
+  @override
+  String get loginMotivationalQuote => 'शरीर वह हासिल करता है जो मन मानता है।';
 }

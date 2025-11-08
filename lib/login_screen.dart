@@ -7,7 +7,7 @@ import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'basic_details_screen.dart';
 import 'isar_service.dart';
-import 'package:sadhak/l10n/app_localizations.dart'; // Added for localization
+// import 'package:sadhak/l10n/app_localizations.dart'; // Temporarily removed for debugging
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +19,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  // final _authService = AuthService(); // Removed: AuthService will be fetched from Provider
   final _isarService = IsarService();
   bool _isLoading = false;
 
@@ -31,20 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-    // Get AuthService from Provider
     final authService = Provider.of<AuthService>(context, listen: false);
 
     setState(() {
       _isLoading = true;
     });
 
-    // Use the authService instance from Provider
     final user = await authService.signInWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
     );
 
-    // Important: Check if the widget is still mounted before calling setState
     if (!mounted) return;
 
     setState(() {
@@ -53,47 +49,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (user == null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.loginFailedError)),
+        const SnackBar(
+          content: Text("Login failed. Please check your credentials."),
+        ), // Hardcoded string
       );
     }
-    // AuthGate will handle successful navigation if login is successful
-    // because it listens to the same authService instance.
   }
 
   void _googleSignIn() async {
-    // Get AuthService from Provider
     final authService = Provider.of<AuthService>(context, listen: false);
-
     setState(() {
       _isLoading = true;
     });
-
-    // Use the authService instance from Provider
     final user = await authService.signInWithGoogle();
-
-    // Important: Check if the widget is still mounted before calling setState
     if (!mounted) return;
-    
     setState(() {
       _isLoading = false;
     });
-
     if (user != null) {
-      // Check if user profile exists after Google Sign-In
-      // This logic might need refinement based on whether Google Sign-In automatically
-      // creates a user profile in your Firebase backend or if you need to create
-      // one in Isar based on the Firebase user.
-      final userProfile = await _isarService.getUserProfileById(user.uid); // Assuming getUserProfileById exists
-      
+      final userProfile = await _isarService.getUserProfileById(user.uid);
       if (!mounted) return;
-
       if (userProfile == null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const BasicDetailsScreen()),
         );
       }
-      // If profile exists, AuthGate should handle navigation.
     }
   }
 
@@ -115,60 +96,151 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Text(AppLocalizations.of(context)!.loginScreenAppName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "SADHAK",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ), // Hardcoded string
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.loginWelcomeBack, textAlign: TextAlign.center, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const Text(
+                "Welcome Back!",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ), // Hardcoded string
               const SizedBox(height: 32),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(hintText: AppLocalizations.of(context)!.loginEmailHint, filled: true, fillColor: Colors.grey[200], border: textFieldBorder),
+                decoration: InputDecoration(
+                  hintText: "Email",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: textFieldBorder,
+                ), // Hardcoded string
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: InputDecoration(hintText: AppLocalizations.of(context)!.loginPasswordHint, filled: true, fillColor: Colors.grey[200], border: textFieldBorder),
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: textFieldBorder,
+                ), // Hardcoded string
               ),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen())),
-                  child: Text(AppLocalizations.of(context)!.loginForgotPassword, style: const TextStyle(color: Colors.black54)),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ForgotPasswordScreen(),
+                    ),
+                  ),
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Colors.black54),
+                  ), // Hardcoded string
                 ),
               ),
               ElevatedButton(
                 onPressed: _isLoading ? null : _login,
-                style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black)) : Text(AppLocalizations.of(context)!.loginButton, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Colors.black,
+                        ),
+                      )
+                    : const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ), // Hardcoded string
               ),
               const SizedBox(height: 24),
-              Text(AppLocalizations.of(context)!.loginOrContinueWith, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+              const Text(
+                "Or continue with",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.black54),
+              ), // Hardcoded string
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: _isLoading ? null : _googleSignIn,
-                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: BorderSide(color: Colors.grey.shade300)),
-                child: Text(AppLocalizations.of(context)!.loginContinueWithGoogle, style: const TextStyle(color: Colors.black, fontSize: 16)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                child: const Text(
+                  "Continue with Google",
+                  style: TextStyle(color: Colors.black, fontSize: 16),
+                ), // Hardcoded string
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: () {}, // Apple Sign-in not implemented
-                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: BorderSide(color: Colors.grey.shade300)),
-                child: Text(AppLocalizations.of(context)!.loginContinueWithApple, style: const TextStyle(color: Colors.black, fontSize: 16)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                child: const Text(
+                  "Continue with Apple",
+                  style: TextStyle(color: Colors.black, fontSize: 16),
+                ), // Hardcoded string
               ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(AppLocalizations.of(context)!.loginDontHaveAccount, style: const TextStyle(color: Colors.black54)),
+                  const Text(
+                    "Don't have an account?",
+                    style: TextStyle(color: Colors.black54),
+                  ), // Hardcoded string
                   TextButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignupScreen())),
-                    child: Text(AppLocalizations.of(context)!.loginSignUpButton, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignupScreen(),
+                      ),
+                    ),
+                    child: const Text(
+                      "Sign Up",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ), // Hardcoded string
                   ),
                 ],
               ),
               const Spacer(),
-              Text(AppLocalizations.of(context)!.loginMotivationalQuote, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54, fontStyle: FontStyle.italic)),
+              const Text(
+                "The body achieves what the mind believes.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ), // Hardcoded string
               const SizedBox(height: 24),
             ],
           ),
