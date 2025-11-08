@@ -406,16 +406,23 @@ class _JumpResultScreenState extends State<JumpResultScreen> {
 // --- HELPER FUNCTIONS and WIDGETS ---
 
 PoseAnalyzer _getAnalyzerForTest(String testTitle) {
-  String lowerCaseTestTitle = testTitle.toLowerCase();
-  if (lowerCaseTestTitle.contains('push-up')) {
+  final t = testTitle.toLowerCase();
+  if (t.contains('push')) {
     return PushUpAnalyzer();
-  } else if (lowerCaseTestTitle.contains('sit-up')) {
+  } else if (t.contains('sit')) {
     return SitUpAnalyzer();
-  } else if (lowerCaseTestTitle.contains('squat')) {
+  } else if (t.contains('squat')) {
     return SquatAnalyzer();
+  } else if (t.contains('broad')) {
+    return StandingBroadJumpAnalyzer();
+  } else if (t.contains('vertical') ||
+      t.contains('jump') ||
+      t.contains('jack')) {
+    return StandingVerticalJumpAnalyzer();
   }
-  // Add other analyzers as needed
-  return NoAIAnalyzer(); // Default fallback
+
+  // Default conservative fallback
+  return NoAIAnalyzer();
 }
 
 AppBar _buildAppBar(BuildContext context, String title) {

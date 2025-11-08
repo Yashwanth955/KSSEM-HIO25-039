@@ -1,3 +1,4 @@
+// lib/pose_analyzer.dart
 import 'dart:math';
 import 'dart:ui';
 
@@ -9,52 +10,18 @@ abstract class PoseAnalyzer {
   List<String> getFeedback();
   bool get formIsCorrect;
   int get wrongRepCount;
-  void Function()? onFraudDetected;
 
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true});
+  void processPose(Pose pose, Size imageSize);
   void reset();
 }
 
 /// ---------- Helpers ----------
-/// Landmark smoother (exponential moving average) to reduce jitter.
-class _LandmarkSmoother {
-  static final Map<PoseLandmarkType, Offset> _smoothed = {};
-  static const double _alpha =
-      0.4; // smoothing factor (higher = more responsive)
-
-  static Offset smooth(PoseLandmarkType type, Offset raw) {
-    final prev = _smoothed[type];
-    if (prev == null) {
-      _smoothed[type] = raw;
-      return raw;
-    }
-    final s = Offset(
-      prev.dx + _alpha * (raw.dx - prev.dx),
-      prev.dy + _alpha * (raw.dy - prev.dy),
-    );
-    _smoothed[type] = s;
-    return s;
-  }
-
-  static void reset() => _smoothed.clear();
-}
-
-/// Access landmark position with confidence filtering + smoothing.
 Offset? _lmPos(Pose pose, PoseLandmarkType type) {
   try {
     final lm = pose.landmarks[type];
     if (lm == null) return null;
-    // Filter by confidence if available (ML Kit provides likelihood 0..1)
-    try {
-      // Some platform versions expose 'likelihood' as a non-nullable double; guard via try/catch
-      // and ignore if field is not present or throws.
-      // If available and low, drop landmark to avoid jitter.
-      final dynamic lk = (lm as dynamic).likelihood;
-      if (lk is double && lk < 0.30) return null;
-    } catch (_) {}
-    final raw = Offset(lm.x.toDouble(), lm.y.toDouble());
-    return _LandmarkSmoother.smooth(type, raw);
-  } catch (_) {
+    return Offset(lm.x.toDouble(), lm.y.toDouble());
+  } catch (e) {
     return null;
   }
 }
@@ -77,6 +44,14 @@ double _angleBetween(Offset a, Offset b, Offset c) {
 /// A small utility: average of two angles (handles NaN)
 double _avg(double a, double b) => (a + b) / 2;
 
+/// Horizontal distance in normalized coordinates (x / imageWidth)
+double _normDx(Offset a, Offset b, Size imageSize) =>
+    (a.dx - b.dx).abs() / (imageSize.width == 0 ? 1 : imageSize.width);
+
+/// Vertical distance normalized
+double _normDy(Offset a, Offset b, Size imageSize) =>
+    (a.dy - b.dy).abs() / (imageSize.height == 0 ? 1 : imageSize.height);
+
 /// ---------- No-AI Analyzer ----------
 class NoAIAnalyzer extends PoseAnalyzer {
   @override
@@ -92,7 +67,7 @@ class NoAIAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     // No-op
   }
 
@@ -127,23 +102,20 @@ class SitAndReachAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     // We'll estimate reach by horizontal distance of fingertips to toes/ankle
     final lHand = _lmPos(pose, PoseLandmarkType.leftIndex);
     final rHand = _lmPos(pose, PoseLandmarkType.rightIndex);
     final lFoot = _lmPos(pose, PoseLandmarkType.leftAnkle);
     final rFoot = _lmPos(pose, PoseLandmarkType.rightAnkle);
 
-    if (lHand == null || rHand == null || lFoot == null || rFoot == null) {
-      return;
-    }
+    if (lHand == null || rHand == null || lFoot == null || rFoot == null) return;
 
     // Use nearest foot
     final handsX = (lHand.dx + rHand.dx) / 2;
     final feetX = (lFoot.dx + rFoot.dx) / 2;
 
-    _reachDistanceNorm =
-        ((handsX - feetX).abs()) / (imageSize.width == 0 ? 1 : imageSize.width);
+    _reachDistanceNorm = ((handsX - feetX).abs()) / (imageSize.width == 0 ? 1 : imageSize.width);
     _measured = true;
   }
 
@@ -162,20 +134,12 @@ class PushUpAnalyzer extends PoseAnalyzer {
 
   // internal FSM
   bool _wasDown = false;
-
-  // temporal gating
-  int _framesSinceLastRep = 9999;
-  static const int _minFramesBetweenReps =
-      6; // avoid double-counting in rapid oscillations
-  int _rapidRepCounter = 0; // suspicious rapid reps
+  bool _wasUp = true;
 
   // thresholds (tune for your camera / subject)
-  final double _elbowDownAngle =
-      90; // elbow angle less than this considered down
-  final double _elbowUpAngle =
-      160; // elbow angle greater than this considered up
-  final double _hipDropThresholdNorm =
-      0.08; // normalized (relative) vertical offset between shoulders/hips
+  final double _elbowDownAngle = 90; // elbow angle less than this considered down
+  final double _elbowUpAngle = 160; // elbow angle greater than this considered up
+  final double _hipDropThresholdNorm = 0.08; // normalized (relative) vertical offset between shoulders/hips
 
   @override
   int get repCount => _reps;
@@ -184,9 +148,7 @@ class PushUpAnalyzer extends PoseAnalyzer {
   List<String> getFeedback() {
     final feedback = <String>[];
     if (_elbowFlareCount > 2) {
-      feedback.add(
-        'Elbows flared on $_elbowFlareCount reps — keep elbows closer to body.',
-      );
+      feedback.add('Elbows flared on $_elbowFlareCount reps — keep elbows closer to body.');
     }
     if (_hipDropCount > 0) {
       feedback.add('Hips dropped $_hipDropCount times — brace your core.');
@@ -202,8 +164,7 @@ class PushUpAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => _hipDropCount + _elbowFlareCount;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
-    _framesSinceLastRep++; // track frame separation
+  void processPose(Pose pose, Size imageSize) {
     // required landmarks
     final lShoulder = _lmPos(pose, PoseLandmarkType.leftShoulder);
     final rShoulder = _lmPos(pose, PoseLandmarkType.rightShoulder);
@@ -214,16 +175,7 @@ class PushUpAnalyzer extends PoseAnalyzer {
     final lHip = _lmPos(pose, PoseLandmarkType.leftHip);
     final rHip = _lmPos(pose, PoseLandmarkType.rightHip);
 
-    if ([
-      lShoulder,
-      rShoulder,
-      lElbow,
-      rElbow,
-      lWrist,
-      rWrist,
-      lHip,
-      rHip,
-    ].contains(null)) {
+    if ([lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip].contains(null)) {
       // missing data
       return;
     }
@@ -238,32 +190,15 @@ class PushUpAnalyzer extends PoseAnalyzer {
     final hipY = (lHip!.dy + rHip!.dy) / 2;
 
     // if hip is sagging relative to shoulders (normalized)
-    final hipSagNorm =
-        (hipY - shoulderY).abs() /
-        (imageSize.height == 0 ? 1 : imageSize.height);
+    final hipSagNorm = (hipY - shoulderY).abs() / (imageSize.height == 0 ? 1 : imageSize.height);
 
     // elbow flare detection: angle shoulder-elbow-wrist projected horizontally
     // approximate flare by shoulder->elbow vector angle with vertical
-    final leftShoulderElbowVec = Offset(
-      lElbow.dx - lShoulder.dx,
-      lElbow.dy - lShoulder.dy,
-    );
-    final rightShoulderElbowVec = Offset(
-      rElbow.dx - rShoulder.dx,
-      rElbow.dy - rShoulder.dy,
-    );
-    final leftShoulderElbowAngleFromVertical =
-        (atan2(leftShoulderElbowVec.dx.abs(), leftShoulderElbowVec.dy.abs()) *
-        180 /
-        pi);
-    final rightShoulderElbowAngleFromVertical =
-        (atan2(rightShoulderElbowVec.dx.abs(), rightShoulderElbowVec.dy.abs()) *
-        180 /
-        pi);
-    final flareAngle = _avg(
-      leftShoulderElbowAngleFromVertical,
-      rightShoulderElbowAngleFromVertical,
-    );
+    final leftShoulderElbowVec = Offset(lElbow.dx - lShoulder.dx, lElbow.dy - lShoulder.dy);
+    final rightShoulderElbowVec = Offset(rElbow.dx - rShoulder.dx, rElbow.dy - rShoulder.dy);
+    final leftShoulderElbowAngleFromVertical = (atan2(leftShoulderElbowVec.dx.abs(), leftShoulderElbowVec.dy.abs()) * 180 / pi);
+    final rightShoulderElbowAngleFromVertical = (atan2(rightShoulderElbowVec.dx.abs(), rightShoulderElbowVec.dy.abs()) * 180 / pi);
+    final flareAngle = _avg(leftShoulderElbowAngleFromVertical, rightShoulderElbowAngleFromVertical);
 
     // FSM: detect down -> up transition
     final isDown = elbowAngle < _elbowDownAngle;
@@ -271,21 +206,12 @@ class PushUpAnalyzer extends PoseAnalyzer {
 
     if (isDown) _wasDown = true;
     if (_wasDown && isUp) {
-      final canCount =
-          allowCounting && _framesSinceLastRep >= _minFramesBetweenReps;
-      if (canCount) {
-        _reps++;
-        if (hipSagNorm > _hipDropThresholdNorm) _hipDropCount++;
-        if (flareAngle > 35) _elbowFlareCount++;
-        if (_framesSinceLastRep < 10) {
-          _rapidRepCounter++;
-          if (_rapidRepCounter >= 3 && onFraudDetected != null) {
-            onFraudDetected!();
-          }
-        }
-        _framesSinceLastRep = 0;
-      }
+      _reps++;
       _wasDown = false;
+      // form checks at rep completion
+      if (hipSagNorm > _hipDropThresholdNorm) _hipDropCount++;
+      if (flareAngle > 35) _elbowFlareCount++;
+      _wasUp = true;
     }
 
     // keep last states consistent
@@ -300,9 +226,7 @@ class PushUpAnalyzer extends PoseAnalyzer {
     _hipDropCount = 0;
     _elbowFlareCount = 0;
     _wasDown = false;
-    _framesSinceLastRep = 9999;
-    _rapidRepCounter = 0;
-    _LandmarkSmoother.reset();
+    _wasUp = true;
   }
 }
 
@@ -313,16 +237,12 @@ class SitUpAnalyzer extends PoseAnalyzer {
 
   // FSM
   bool _wasDown = true;
-
-  int _framesSinceLastRep = 9999;
-  static const int _minFramesBetweenReps = 6;
-  int _rapidRepCounter = 0;
+  bool _wasUp = false;
 
   // thresholds
   final double _upTorsoAngle = 40.0; // angle shoulder-hip-knee > this => up
   final double _downTorsoAngle = 20.0; // below this => down
-  final double _feetLiftNormThreshold =
-      0.05; // normalized vertical movement of ankles
+  final double _feetLiftNormThreshold = 0.05; // normalized vertical movement of ankles
 
   Offset? _initialLeftAnkle;
   Offset? _initialRightAnkle;
@@ -348,8 +268,7 @@ class SitUpAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => _formErrorCount;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
-    _framesSinceLastRep++;
+  void processPose(Pose pose, Size imageSize) {
     final lShoulder = _lmPos(pose, PoseLandmarkType.leftShoulder);
     final rShoulder = _lmPos(pose, PoseLandmarkType.rightShoulder);
     final lHip = _lmPos(pose, PoseLandmarkType.leftHip);
@@ -362,53 +281,28 @@ class SitUpAnalyzer extends PoseAnalyzer {
     if ([lShoulder, rShoulder, lHip, rHip, lKnee].contains(null)) return;
 
     // torso angle: use shoulder - hip - knee
-    final shoulder = Offset(
-      (lShoulder!.dx + rShoulder!.dx) / 2,
-      (lShoulder.dy + rShoulder.dy) / 2,
-    );
+    final shoulder = Offset((lShoulder!.dx + rShoulder!.dx) / 2, (lShoulder.dy + rShoulder.dy) / 2);
     final hip = Offset((lHip!.dx + rHip!.dx) / 2, (lHip.dy + rHip.dy) / 2);
     final knee = Offset((lKnee!.dx + rKnee!.dx) / 2, (lKnee.dy + rKnee.dy) / 2);
 
     final torsoAngle = _angleBetween(shoulder, hip, knee);
 
     // set initial ankles for feet lift detection
-    if (_initialLeftAnkle == null && lAnkle != null) {
-      _initialLeftAnkle = lAnkle;
-    }
-    if (_initialRightAnkle == null && rAnkle != null) {
-      _initialRightAnkle = rAnkle;
-    }
+    if (_initialLeftAnkle == null && lAnkle != null) _initialLeftAnkle = lAnkle;
+    if (_initialRightAnkle == null && rAnkle != null) _initialRightAnkle = rAnkle;
 
-    final ankleLifted =
-        (lAnkle != null &&
-            _initialLeftAnkle != null &&
-            (lAnkle.dy - _initialLeftAnkle!.dy).abs() /
-                    (imageSize.height == 0 ? 1 : imageSize.height) >
-                _feetLiftNormThreshold) ||
-        (rAnkle != null &&
-            _initialRightAnkle != null &&
-            (rAnkle.dy - _initialRightAnkle!.dy).abs() /
-                    (imageSize.height == 0 ? 1 : imageSize.height) >
-                _feetLiftNormThreshold);
+    final ankleLifted = (lAnkle != null && _initialLeftAnkle != null && (lAnkle.dy - _initialLeftAnkle!.dy).abs() / (imageSize.height == 0 ? 1 : imageSize.height) > _feetLiftNormThreshold) ||
+        (rAnkle != null && _initialRightAnkle != null && (rAnkle.dy - _initialRightAnkle!.dy).abs() / (imageSize.height == 0 ? 1 : imageSize.height) > _feetLiftNormThreshold);
 
     final isUp = torsoAngle > _upTorsoAngle;
     final isDown = torsoAngle < _downTorsoAngle;
 
     if (isDown) _wasDown = true;
     if (_wasDown && isUp) {
-      final canCount =
-          allowCounting && _framesSinceLastRep >= _minFramesBetweenReps;
-      if (canCount) {
-        _reps++;
-        if (ankleLifted) _formErrorCount++;
-        if (_framesSinceLastRep < 10) {
-          _rapidRepCounter++;
-          if (_rapidRepCounter >= 4 && onFraudDetected != null)
-            onFraudDetected!();
-        }
-        _framesSinceLastRep = 0;
-      }
+      _reps++;
       _wasDown = false;
+      if (ankleLifted) _formErrorCount++;
+      _wasUp = true;
     }
   }
 
@@ -417,11 +311,9 @@ class SitUpAnalyzer extends PoseAnalyzer {
     _reps = 0;
     _formErrorCount = 0;
     _wasDown = true;
+    _wasUp = false;
     _initialLeftAnkle = null;
     _initialRightAnkle = null;
-    _framesSinceLastRep = 9999;
-    _rapidRepCounter = 0;
-    _LandmarkSmoother.reset();
   }
 }
 
@@ -431,10 +323,7 @@ class SquatAnalyzer extends PoseAnalyzer {
   int _formErrorCount = 0;
 
   bool _wasDown = false;
-
-  int _framesSinceLastRep = 9999;
-  static const int _minFramesBetweenReps = 6;
-  int _rapidRepCounter = 0;
+  bool _wasUp = true;
 
   final double _kneeDownAngle = 100.0; // knee angle < this means deep enough
   final double _kneeUpAngle = 160.0;
@@ -446,9 +335,7 @@ class SquatAnalyzer extends PoseAnalyzer {
   @override
   List<String> getFeedback() {
     final feedback = <String>[];
-    if (_formErrorCount > 0) {
-      feedback.add('Watch knee alignment and keep chest up.');
-    }
+    if (_formErrorCount > 0) feedback.add('Watch knee alignment and keep chest up.');
     if (feedback.isEmpty) feedback.add('Solid squat technique.');
     return feedback;
   }
@@ -460,8 +347,7 @@ class SquatAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => _formErrorCount;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
-    _framesSinceLastRep++;
+  void processPose(Pose pose, Size imageSize) {
     final lHip = _lmPos(pose, PoseLandmarkType.leftHip);
     final rHip = _lmPos(pose, PoseLandmarkType.rightHip);
     final lKnee = _lmPos(pose, PoseLandmarkType.leftKnee);
@@ -483,19 +369,9 @@ class SquatAnalyzer extends PoseAnalyzer {
 
     if (isDown) _wasDown = true;
     if (_wasDown && isUp) {
-      final canCount =
-          allowCounting && _framesSinceLastRep >= _minFramesBetweenReps;
-      if (canCount) {
-        _reps++;
-        if (valgus > _kneeValgusThreshold) _formErrorCount++;
-        if (_framesSinceLastRep < 10) {
-          _rapidRepCounter++;
-          if (_rapidRepCounter >= 4 && onFraudDetected != null)
-            onFraudDetected!();
-        }
-        _framesSinceLastRep = 0;
-      }
+      _reps++;
       _wasDown = false;
+      if (valgus > _kneeValgusThreshold) _formErrorCount++;
     }
   }
 
@@ -504,9 +380,7 @@ class SquatAnalyzer extends PoseAnalyzer {
     _reps = 0;
     _formErrorCount = 0;
     _wasDown = false;
-    _framesSinceLastRep = 9999;
-    _rapidRepCounter = 0;
-    _LandmarkSmoother.reset();
+    _wasUp = true;
   }
 }
 
@@ -535,7 +409,7 @@ class StandingBroadJumpAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     // We'll use hip x coordinate movement to estimate horizontal travel across frames
     final lHip = _lmPos(pose, PoseLandmarkType.leftHip);
     final rHip = _lmPos(pose, PoseLandmarkType.rightHip);
@@ -560,8 +434,7 @@ class StandingBroadJumpAnalyzer extends PoseAnalyzer {
       // landing is approximate: hipNormY increases again
       if (hipNormY > 0.6) {
         _endHipX = hipNormX;
-        final dist = (_endHipX - (_startHipX.isNaN ? hipNormX : _startHipX))
-            .abs();
+        final dist = (_endHipX - (_startHipX.isNaN ? hipNormX : _startHipX)).abs();
         if (dist > _bestDistanceNorm) _bestDistanceNorm = dist;
         // reset for next detection
         _isJumping = false;
@@ -583,8 +456,7 @@ class StandingBroadJumpAnalyzer extends PoseAnalyzer {
 /// ---------- Standing Vertical Jump Analyzer ----------
 class StandingVerticalJumpAnalyzer extends PoseAnalyzer {
   double _baselineAnkleY = double.nan;
-  double _peakAnkleY =
-      double.nan; // smaller value = higher jump (image y increases downward)
+  double _peakAnkleY = double.nan; // smaller value = higher jump (image y increases downward)
   bool _inAir = false;
   double _bestJumpNorm = 0.0;
 
@@ -605,15 +477,12 @@ class StandingVerticalJumpAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     final lAnkle = _lmPos(pose, PoseLandmarkType.leftAnkle);
     final rAnkle = _lmPos(pose, PoseLandmarkType.rightAnkle);
     if (lAnkle == null || rAnkle == null) return;
 
-    final ankle = Offset(
-      (lAnkle.dx + rAnkle.dx) / 2,
-      (lAnkle.dy + rAnkle.dy) / 2,
-    );
+    final ankle = Offset((lAnkle.dx + rAnkle.dx) / 2, (lAnkle.dy + rAnkle.dy) / 2);
     final normY = ankle.dy / (imageSize.height == 0 ? 1 : imageSize.height);
 
     if (_baselineAnkleY.isNaN) {
@@ -665,9 +534,7 @@ class MedicineBallThrowAnalyzer extends PoseAnalyzer {
 
   @override
   List<String> getFeedback() {
-    if (_bestForwardNorm > 0.12) {
-      return ['Great explosive throw, legs and core engaged.'];
-    }
+    if (_bestForwardNorm > 0.12) return ['Great explosive throw, legs and core engaged.'];
     if (_bestForwardNorm > 0.06) return ['Good throw, add more hip drive.'];
     return ['Work on generating power from legs and rotation.'];
   }
@@ -679,7 +546,7 @@ class MedicineBallThrowAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     final lHip = _lmPos(pose, PoseLandmarkType.leftHip);
     final rHip = _lmPos(pose, PoseLandmarkType.rightHip);
     final nose = _lmPos(pose, PoseLandmarkType.nose);
@@ -726,7 +593,7 @@ class SprintAnalyzer extends PoseAnalyzer {
   Offset? _prevRightAnkle;
 
   @override
-  int get repCount => _stepCount;
+  int get repCount => 0;
 
   @override
   List<String> getFeedback() => ['Maintain forward lean and drive knees.'];
@@ -738,7 +605,7 @@ class SprintAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     final lAnkle = _lmPos(pose, PoseLandmarkType.leftAnkle);
     final rAnkle = _lmPos(pose, PoseLandmarkType.rightAnkle);
     if (lAnkle == null || rAnkle == null) return;
@@ -748,9 +615,7 @@ class SprintAnalyzer extends PoseAnalyzer {
       final leftDy = (lAnkle.dy - _prevLeftAnkle!.dy).abs();
       final rightDy = (rAnkle.dy - _prevRightAnkle!.dy).abs();
       if (leftDy > 10 || rightDy > 10) {
-        if (allowCounting) {
-          _stepCount++;
-        }
+        _stepCount++;
       }
     }
     _prevLeftAnkle = lAnkle;
@@ -773,7 +638,7 @@ class ShuttleRunAnalyzer extends PoseAnalyzer {
   bool? _lastDirRight;
 
   @override
-  int get repCount => _directionChanges;
+  int get repCount => 0;
 
   @override
   List<String> getFeedback() => ['Stay low on turns and push off quickly.'];
@@ -785,7 +650,7 @@ class ShuttleRunAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     final nose = _lmPos(pose, PoseLandmarkType.nose);
     if (nose == null) return;
     final noseNormX = nose.dx / (imageSize.width == 0 ? 1 : imageSize.width);
@@ -799,9 +664,7 @@ class ShuttleRunAnalyzer extends PoseAnalyzer {
     _lastDirRight ??= dirRight;
 
     if (dirRight != _lastDirRight) {
-      if (allowCounting) {
-        _directionChanges++;
-      }
+      _directionChanges++;
       _lastDirRight = dirRight;
     }
     _lastNoseX = noseNormX;
@@ -823,7 +686,7 @@ class EnduranceRunAnalyzer extends PoseAnalyzer {
   Offset? _prevRightAnkle;
 
   @override
-  int get repCount => _stepCount;
+  int get repCount => 0;
 
   @override
   List<String> getFeedback() => ['Hold steady pace and control breathing.'];
@@ -835,7 +698,7 @@ class EnduranceRunAnalyzer extends PoseAnalyzer {
   int get wrongRepCount => 0;
 
   @override
-  void analyze(Pose pose, Size imageSize, {bool allowCounting = true}) {
+  void processPose(Pose pose, Size imageSize) {
     final lAnkle = _lmPos(pose, PoseLandmarkType.leftAnkle);
     final rAnkle = _lmPos(pose, PoseLandmarkType.rightAnkle);
     if (lAnkle == null || rAnkle == null) return;
@@ -843,11 +706,7 @@ class EnduranceRunAnalyzer extends PoseAnalyzer {
     if (_prevLeftAnkle != null && _prevRightAnkle != null) {
       final leftDy = (lAnkle.dy - _prevLeftAnkle!.dy).abs();
       final rightDy = (rAnkle.dy - _prevRightAnkle!.dy).abs();
-      if (leftDy > 8 || rightDy > 8) {
-        if (allowCounting) {
-          _stepCount++;
-        }
-      }
+      if (leftDy > 8 || rightDy > 8) _stepCount++;
     }
     _prevLeftAnkle = lAnkle;
     _prevRightAnkle = rAnkle;

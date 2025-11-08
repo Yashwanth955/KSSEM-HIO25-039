@@ -15,6 +15,7 @@ import 'matching_service.dart';
 import 'report_upload_service.dart';
 import 'services/app_config.dart';
 import 'services/supabase_upload_service.dart';
+import 'data/app_database.dart';
 
 const primaryGreen = Color(0xFF20D36A);
 const lightGreyButton = Color(0xFFF0F0F0);
@@ -493,6 +494,28 @@ class _ReportScreenState extends State<ReportScreen> {
                           'headline': reportData.headlineResult,
                         },
                       );
+                      // Attempt to extract a URL from response body if any
+                      String? extractedUrl;
+                      final match = RegExp(
+                        r'https?://\S+',
+                      ).firstMatch(result.body);
+                      if (match != null) extractedUrl = match.group(0);
+                      // Persist locally if upload ok
+                      if (result.ok) {
+                        try {
+                          await AppDatabase.instance.insert('athlete_reports', {
+                            'athleteUid': athleteUid,
+                            'testTitle': reportData.testTitle,
+                            'headline': reportData.headlineResult,
+                            'resultValue': reportData.headlineResult,
+                            'generatedAt': DateTime.now().toIso8601String(),
+                            'pdfPath': null,
+                            'uploadedUrl': extractedUrl,
+                            'synced': 1,
+                            'tags': 'single',
+                          });
+                        } catch (_) {}
+                      }
                       scaffold.hideCurrentSnackBar();
                       scaffold.showSnackBar(
                         SnackBar(

@@ -18,7 +18,8 @@ class TestSession {
   });
 
   void processFrame(ml.Pose pose, Size imageSize) {
-    analyzer.analyze(pose, imageSize);
+    // Use the unified analyzer API
+    analyzer.processPose(pose, imageSize);
   }
 
   Future<void> finishTest() async {

@@ -176,126 +176,173 @@ class PdfGenerator {
 
   /// Generate a consolidated PDF for every test with stored results
   static Future<void> generateAndShareAllReports() async {
-    final pdf = pw.Document();
-    final isar = IsarService();
-    final all = await isar.getAllTestResults();
-    final byTest = <String, List<TestResult>>{};
-    for (final r in all) {
-      byTest.putIfAbsent(r.testTitle, () => []).add(r);
-    }
-    final titles = byTest.keys.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    for (final t in titles) {
-      byTest[t]!.sort((a, b) => a.date.compareTo(b.date));
-    }
+    try {
+      final pdf = pw.Document();
+      final isar = IsarService();
+      final all = await isar.getAllTestResults();
+      final byTest = <String, List<TestResult>>{};
+      for (final r in all) {
+        byTest.putIfAbsent(r.testTitle, () => []).add(r);
+      }
+      final titles = byTest.keys.toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      for (final t in titles) {
+        byTest[t]!.sort((a, b) => a.date.compareTo(b.date));
+      }
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-        footer: (context) => _buildFooter(context),
-        build: (context) {
-          final widgets = <pw.Widget>[];
-          widgets.add(_buildHeader('All Tests Report'));
-          if (titles.isEmpty) {
-            widgets.add(pw.SizedBox(height: 12));
-            widgets.add(
-              pw.Text(
-                'No test results found.',
-                style: pw.TextStyle(color: PdfColors.grey700),
-              ),
-            );
-            return widgets;
-          }
-          for (final title in titles) {
-            final results = byTest[title]!;
-            widgets.add(pw.SizedBox(height: 16));
-            widgets.add(
-              pw.Text(
-                title,
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          footer: (context) => _buildFooter(context),
+          build: (context) {
+            final widgets = <pw.Widget>[];
+            widgets.add(_buildHeader('All Tests Report'));
+            if (titles.isEmpty) {
+              widgets.add(pw.SizedBox(height: 12));
+              widgets.add(
+                pw.Text(
+                  'No test results found.',
+                  style: pw.TextStyle(color: PdfColors.grey700),
                 ),
-              ),
-            );
-            widgets.add(pw.SizedBox(height: 6));
-            widgets.add(_buildStatsSummary(results));
-            widgets.add(pw.SizedBox(height: 10));
-            widgets.add(
-              _buildHistoricalPerformance('Historical Performance', results),
-            );
-            widgets.add(pw.Divider());
-          }
-          return widgets;
-        },
-      ),
-    );
+              );
+              return widgets;
+            }
+            for (final title in titles) {
+              final results = byTest[title]!;
+              widgets.add(pw.SizedBox(height: 16));
+              widgets.add(
+                pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              );
+              widgets.add(pw.SizedBox(height: 6));
+              widgets.add(_buildStatsSummary(results));
+              widgets.add(pw.SizedBox(height: 10));
+              widgets.add(
+                _buildHistoricalPerformance('Historical Performance', results),
+              );
+              widgets.add(pw.Divider());
+            }
+            return widgets;
+          },
+        ),
+      );
 
-    await Printing.sharePdf(
-      bytes: await pdf.save(),
-      filename: 'All_Tests_Report.pdf',
-    );
+      await Printing.sharePdf(
+        bytes: await pdf.save(),
+        filename: 'All_Tests_Report.pdf',
+      );
+    } catch (e) {
+      // Fallback: build minimal error PDF so user still gets a file/share sheet
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (c) => pw.Center(
+            child: pw.Column(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Text(
+                  'Failed to build consolidated report',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 12),
+                pw.Text(
+                  'Error: $e',
+                  style: pw.TextStyle(color: PdfColors.red, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await Printing.sharePdf(
+        bytes: await pdf.save(),
+        filename: 'All_Tests_Report_error.pdf',
+      );
+    }
   }
 
   /// Build the consolidated report as raw bytes (for upload to a server)
   static Future<Uint8List> buildAllReportsPdfBytes() async {
-    final pdf = pw.Document();
-    final isar = IsarService();
-    final all = await isar.getAllTestResults();
-    final byTest = <String, List<TestResult>>{};
-    for (final r in all) {
-      byTest.putIfAbsent(r.testTitle, () => []).add(r);
-    }
-    final titles = byTest.keys.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    for (final t in titles) {
-      byTest[t]!.sort((a, b) => a.date.compareTo(b.date));
-    }
+    try {
+      final pdf = pw.Document();
+      final isar = IsarService();
+      final all = await isar.getAllTestResults();
+      final byTest = <String, List<TestResult>>{};
+      for (final r in all) {
+        byTest.putIfAbsent(r.testTitle, () => []).add(r);
+      }
+      final titles = byTest.keys.toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      for (final t in titles) {
+        byTest[t]!.sort((a, b) => a.date.compareTo(b.date));
+      }
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-        footer: (context) => _buildFooter(context),
-        build: (context) {
-          final widgets = <pw.Widget>[];
-          widgets.add(_buildHeader('All Tests Report'));
-          if (titles.isEmpty) {
-            widgets.add(pw.SizedBox(height: 12));
-            widgets.add(
-              pw.Text(
-                'No test results found.',
-                style: pw.TextStyle(color: PdfColors.grey700),
-              ),
-            );
-            return widgets;
-          }
-          for (final title in titles) {
-            final results = byTest[title]!;
-            widgets.add(pw.SizedBox(height: 16));
-            widgets.add(
-              pw.Text(
-                title,
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          footer: (context) => _buildFooter(context),
+          build: (context) {
+            final widgets = <pw.Widget>[];
+            widgets.add(_buildHeader('All Tests Report'));
+            if (titles.isEmpty) {
+              widgets.add(pw.SizedBox(height: 12));
+              widgets.add(
+                pw.Text(
+                  'No test results found.',
+                  style: pw.TextStyle(color: PdfColors.grey700),
                 ),
-              ),
-            );
-            widgets.add(pw.SizedBox(height: 6));
-            widgets.add(_buildStatsSummary(results));
-            widgets.add(pw.SizedBox(height: 10));
-            widgets.add(
-              _buildHistoricalPerformance('Historical Performance', results),
-            );
-            widgets.add(pw.Divider());
-          }
-          return widgets;
-        },
-      ),
-    );
-    return pdf.save();
+              );
+              return widgets;
+            }
+            for (final title in titles) {
+              final results = byTest[title]!;
+              widgets.add(pw.SizedBox(height: 16));
+              widgets.add(
+                pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              );
+              widgets.add(pw.SizedBox(height: 6));
+              widgets.add(_buildStatsSummary(results));
+              widgets.add(pw.SizedBox(height: 10));
+              widgets.add(
+                _buildHistoricalPerformance('Historical Performance', results),
+              );
+              widgets.add(pw.Divider());
+            }
+            return widgets;
+          },
+        ),
+      );
+      return pdf.save();
+    } catch (e) {
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (c) => pw.Center(
+            child: pw.Text(
+              'Error generating report: $e',
+              style: pw.TextStyle(color: PdfColors.red),
+            ),
+          ),
+        ),
+      );
+      return pdf.save();
+    }
   }
 
   // ---------- Styling and building blocks ----------

@@ -1,13 +1,10 @@
 // lib/services/supabase_upload_service.dart
 // Handles uploading PDF reports to Supabase Storage and inserting metadata rows.
 
-import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pdf_generator.dart';
 import '../report_models.dart';
-import 'app_config.dart';
-import '../isar_service.dart';
-import '../test_result.dart';
+import '../data/app_database.dart';
 
 class SupabaseUploadService {
   final SupabaseClient _client = Supabase.instance.client;
@@ -36,6 +33,22 @@ class SupabaseUploadService {
       pdfUrl: publicUrl,
       tags: tags,
     );
+    // Also persist locally in athlete_reports for offline/history tracking
+    try {
+      await AppDatabase.instance.insert('athlete_reports', {
+        'athleteUid': athleteUid,
+        'testTitle': report.testTitle,
+        'headline': report.headlineResult,
+        'resultValue': report.headlineResult,
+        'generatedAt': DateTime.now().toIso8601String(),
+        'pdfPath': null,
+        'uploadedUrl': publicUrl,
+        'synced': 1,
+        'tags': (tags ?? ['single']).join(','),
+      });
+    } catch (_) {
+      // Silently ignore local persistence errors to not block upload flow
+    }
     return publicUrl;
   }
 
@@ -66,6 +79,22 @@ class SupabaseUploadService {
       'primary_metric': null,
       'raw_json': null,
     });
+    // Local persistence for consolidated report
+    try {
+      await AppDatabase.instance.insert('athlete_reports', {
+        'athleteUid': athleteUid,
+        'testTitle': 'ALL',
+        'headline': 'Consolidated Performance Report',
+        'resultValue': '',
+        'generatedAt': DateTime.now().toIso8601String(),
+        'pdfPath': null,
+        'uploadedUrl': publicUrl,
+        'synced': 1,
+        'tags': (tags ?? ['all']).join(','),
+      });
+    } catch (_) {
+      // Ignore local DB errors
+    }
     return publicUrl;
   }
 

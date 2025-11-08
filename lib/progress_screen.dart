@@ -13,6 +13,8 @@ import 'pdf_generator.dart';
 import 'report_upload_service.dart';
 import 'services/app_config.dart';
 import 'services/sync_service.dart';
+import 'services/supabase_upload_service.dart';
+import 'data/app_database.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -679,9 +681,23 @@ class _ReportsTabViewState extends State<ReportsTabView> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    // Export a consolidated PDF that includes all tests with dates and performance charts
-                    PdfGenerator.generateAndShareAllReports();
+                  onPressed: () async {
+                    final scaffold = ScaffoldMessenger.of(context);
+                    try {
+                      scaffold.showSnackBar(
+                        const SnackBar(content: Text('Generating PDF...')),
+                      );
+                      await PdfGenerator.generateAndShareAllReports();
+                      scaffold.hideCurrentSnackBar();
+                      scaffold.showSnackBar(
+                        const SnackBar(content: Text('Share sheet opened.')),
+                      );
+                    } catch (e) {
+                      scaffold.hideCurrentSnackBar();
+                      scaffold.showSnackBar(
+                        SnackBar(content: Text('Failed: $e')),
+                      );
+                    }
                   },
                   child: const Text('Export Overall PDF'),
                 ),
@@ -690,37 +706,83 @@ class _ReportsTabViewState extends State<ReportsTabView> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-                    // Build PDF bytes and upload to server
                     final scaffold = ScaffoldMessenger.of(context);
                     try {
                       scaffold.showSnackBar(
                         const SnackBar(content: Text('Uploading report...')),
                       );
-                      final bytes =
-                          await PdfGenerator.buildAllReportsPdfBytes();
-                      // TODO: Replace with your API base URL and optional auth token
-                      final uploader = ReportUploadService(
-                        baseUrl: AppConfig.backendBaseUrl,
-                        authToken: AppConfig.authToken,
-                      );
-                      final result = await uploader.uploadPdfBytes(
-                        pdfBytes: bytes,
-                        filename: 'All_Tests_Report.pdf',
-                        fields: {
-                          'title': 'All Tests Report',
-                          'generatedAt': DateTime.now().toIso8601String(),
-                        },
-                      );
-                      scaffold.hideCurrentSnackBar();
-                      scaffold.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            result.ok
-                                ? 'Report uploaded successfully'
-                                : 'Upload failed (${result.statusCode})',
+                      if (AppConfig.useSupabase) {
+                        final athleteUid =
+                            (await IsarService().getCurrentUserProfile())
+                                ?.firebaseUid ??
+                            'anonymous';
+                        final supa = SupabaseUploadService();
+                        final url = await supa.uploadAllReports(
+                          athleteUid: athleteUid,
+                        );
+                        scaffold.hideCurrentSnackBar();
+                        scaffold.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              url != null
+                                  ? 'Uploaded to Supabase'
+                                  : 'Supabase upload failed',
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        final bytes =
+                            await PdfGenerator.buildAllReportsPdfBytes();
+                        final uploader = ReportUploadService(
+                          baseUrl: AppConfig.backendBaseUrl,
+                          authToken: AppConfig.authToken,
+                        );
+                        final result = await uploader.uploadPdfBytes(
+                          pdfBytes: bytes,
+                          filename: 'All_Tests_Report.pdf',
+                          fields: {
+                            'title': 'All Tests Report',
+                            'generatedAt': DateTime.now().toIso8601String(),
+                          },
+                        );
+                        // Attempt to extract a URL from response body if any
+                        String? extractedUrl = RegExp(
+                          r'https?://\\S+',
+                        ).firstMatch(result.body)?.group(0);
+                        if (result.ok) {
+                          try {
+                            await AppDatabase.instance.insert(
+                              'athlete_reports',
+                              {
+                                'athleteUid':
+                                    (await IsarService()
+                                            .getCurrentUserProfile())
+                                        ?.firebaseUid ??
+                                    'anonymous',
+                                'testTitle': 'ALL',
+                                'headline': 'Consolidated Performance Report',
+                                'resultValue': '',
+                                'generatedAt': DateTime.now().toIso8601String(),
+                                'pdfPath': null,
+                                'uploadedUrl':
+                                    extractedUrl ?? 'backend:/upload',
+                                'synced': 1,
+                                'tags': 'all',
+                              },
+                            );
+                          } catch (_) {}
+                        }
+                        scaffold.hideCurrentSnackBar();
+                        scaffold.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result.ok
+                                  ? 'Report uploaded successfully'
+                                  : 'Upload failed (${result.statusCode})',
+                            ),
+                          ),
+                        );
+                      }
                     } catch (e) {
                       scaffold.hideCurrentSnackBar();
                       scaffold.showSnackBar(

@@ -179,9 +179,7 @@ class _TestInstructionsScreenState extends State<TestInstructionScreen> {
                       builder: (context) => CameraScreen(
                         analyzer: widget.testInfo.analyzer,
                         testName: widget.testInfo.title,
-                        durationInSeconds: widget
-                            .testInfo
-                            .durationInSeconds, // Pass the duration
+                        durationSeconds: widget.testInfo.durationInSeconds ?? 60,
                       ),
                     ),
                   );

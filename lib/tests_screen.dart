@@ -40,7 +40,7 @@ final List<TestInfo> allTests = [
     title: 'Sit and Reach Test',
     description: 'Measure flexibility of lower back and hamstrings.',
     imageUrl: 'assets/images/sitandreach.png', // fixed path
-    analyzer: SitAndReachAnalyzer(), // Using the placeholder analyzer
+    analyzer: SitAndReachAnalyzer(),
     rules: [
       'Sit on the floor with legs extended straight ahead. Shoes should be off.',
       'Place the soles of your feet flat against the testing box.',
@@ -57,7 +57,7 @@ final List<TestInfo> allTests = [
     title: 'Push-Up Test',
     description: 'Assess upper body strength and endurance.',
     imageUrl: 'assets/images/pushups.png', // fixed path
-    analyzer: PushUpAnalyzer(), // AI-powered analyzer
+    analyzer: PushUpAnalyzer(), // Push-up analyzer
     rules: [
       'Start in a high plank position with hands shoulder-width apart and body in a straight line.',
       'Lower your body until your chest is about a fist\'s width from the ground.',
@@ -74,7 +74,7 @@ final List<TestInfo> allTests = [
     title: 'Standing Broad Jump',
     description: 'Evaluate explosive leg power.',
     imageUrl: 'assets/images/standingbroadjump.png', // fixed path
-    analyzer: StandingBroadJumpAnalyzer(), // AI-powered jump detection
+    analyzer: StandingBroadJumpAnalyzer(), // Broad jump analyzer
     rules: [
       'Stand behind a line with feet slightly apart.',
       'Perform a two-foot take-off and landing, swinging your arms and bending knees to provide forward drive.',
@@ -89,8 +89,7 @@ final List<TestInfo> allTests = [
     title: 'Standing Vertical Jump',
     description: 'Evaluate vertical jump height.',
     imageUrl: 'assets/images/standingverticaljump.png', // fixed path
-    analyzer:
-        StandingVerticalJumpAnalyzer(), // AI-powered jump height estimation
+    analyzer: StandingVerticalJumpAnalyzer(), // Vertical jump estimation
     rules: [
       'Stand beside a wall and reach up to mark your standing reach.',
       'From a standing position, squat down and jump as high as you can.',
@@ -105,7 +104,7 @@ final List<TestInfo> allTests = [
     title: 'Medicine Ball Throw',
     description: 'Measure upper body power.',
     imageUrl: 'assets/images/medicineballthrow.png', // fixed path
-    analyzer: MedicineBallThrowAnalyzer(), // Placeholder analyzer
+    analyzer: MedicineBallThrowAnalyzer(), // Medicine ball throw analyzer
     rules: [
       'Stand with your back to the throwing direction, feet shoulder-width apart.',
       'Hold the medicine ball with both hands at your chest.',
@@ -122,7 +121,7 @@ final List<TestInfo> allTests = [
     title: '30mts Standing Start',
     description: 'Measure sprinting speed over 30 meters.',
     imageUrl: 'assets/images/standingrun.png', // fixed path
-    analyzer: SprintAnalyzer(), // Placeholder analyzer
+    analyzer: SprintAnalyzer(), // Sprint approximated with SprintAnalyzer
     rules: [
       'Stand behind the starting line in a stationary position.',
       'On the \'Go\' signal, sprint as fast as possible for 30 meters.',
@@ -139,7 +138,7 @@ final List<TestInfo> allTests = [
     title: '4*10mts Shuttle Run',
     description: 'Measure speed and agility.',
     imageUrl: 'assets/images/shuttlerun1.png', // fixed path
-    analyzer: ShuttleRunAnalyzer(), // Placeholder analyzer
+    analyzer: ShuttleRunAnalyzer(), // Shuttle run analyzer
     rules: [
       'Place two markers 10 meters apart. Start at one marker.',
       'On the \'Go\' signal, sprint to the opposite marker.',
@@ -156,7 +155,7 @@ final List<TestInfo> allTests = [
     title: '800mts Run',
     description: 'Endurance run for U12 age group.',
     imageUrl: 'assets/images/800mrun.png', // fixed path
-    analyzer: EnduranceRunAnalyzer(), // Placeholder analyzer
+    analyzer: EnduranceRunAnalyzer(), // Endurance run analyzer
     rules: [
       'Start at the designated starting line on a 400m track.',
       'On the \'Go\' signal, begin running at a steady, sustainable pace.',
@@ -171,7 +170,7 @@ final List<TestInfo> allTests = [
     title: '1.6km Run',
     description: 'Endurance run for 12+ age group.',
     imageUrl: 'assets/images/1.6km.png', // fixed path
-    analyzer: EnduranceRunAnalyzer(), // Placeholder analyzer
+    analyzer: EnduranceRunAnalyzer(), // Endurance run analyzer
     rules: [
       'Start at the designated starting line on a track or measured course.',
       'On the \'Go\' signal, begin running at a pace you can maintain for the full distance.',
